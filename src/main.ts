@@ -9,4 +9,4 @@ async function bootstrap() {
   const appCnfg = configService.get<ConfigType<typeof appConfig>>('app');
   await app.listen(appCnfg?.port || 3000);
 }
-bootstrap();
+void bootstrap();
