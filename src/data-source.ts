@@ -1,11 +1,14 @@
 import { DataSource } from 'typeorm';
+import { dbConfig } from './config/db.config';
+
+const db = dbConfig();
 
 export const AppDataSource = new DataSource({
   type: 'postgres',
-  host: process.env.DB_HOST,
-  port: Number(process.env.DB_PORT),
-  username: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  synchronize: false,
+  host: db.host,
+  port: db.port,
+  username: db.username,
+  password: db.password,
+  database: db.name,
+  synchronize: true,
 });
