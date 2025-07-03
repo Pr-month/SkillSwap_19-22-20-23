@@ -7,6 +7,7 @@ import { AppDataSource } from './data-source';
 import { appConfig } from './config/app.config';
 import { dbConfig } from './config/db.config';
 import { JwtModule } from '@nestjs/jwt';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { JwtModule } from '@nestjs/jwt';
       load: [appConfig, dbConfig],
     }),
     TypeOrmModule.forRoot(AppDataSource.options),
+    UsersModule,
   ],
   controllers: [AppController],
   providers: [AppService],
