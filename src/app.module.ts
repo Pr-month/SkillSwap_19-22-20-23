@@ -9,6 +9,7 @@ import { dbConfig } from './config/db.config';
 import { JwtModule } from '@nestjs/jwt';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
+import { AccessTokenStrategy } from './auth/strategies/accessToken.strategies';
 
 @Module({
   imports: [
@@ -25,7 +26,7 @@ import { AuthModule } from './auth/auth.module';
     AuthModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, AccessTokenStrategy],
   exports: [JwtModule],
 })
 export class AppModule {}
