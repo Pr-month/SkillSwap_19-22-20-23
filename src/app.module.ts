@@ -15,7 +15,6 @@ import { AccessTokenStrategy } from './auth/strategies/accessToken.strategies';
   imports: [
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'defaultSecretKey',
-      signOptions: { expiresIn: '1h' },
     }),
     ConfigModule.forRoot({
       isGlobal: true,
