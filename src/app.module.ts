@@ -10,6 +10,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { AccessTokenStrategy } from './auth/strategies/accessToken.strategies';
+import { RefreshTokenStrategy } from './auth/strategies/refreshToken.strategies';
 
 @Module({
   imports: [
@@ -25,7 +26,7 @@ import { AccessTokenStrategy } from './auth/strategies/accessToken.strategies';
     AuthModule,
   ],
   controllers: [AppController],
-  providers: [AppService, AccessTokenStrategy],
+  providers: [AppService, AccessTokenStrategy, RefreshTokenStrategy],
   exports: [JwtModule],
 })
 export class AppModule {}
