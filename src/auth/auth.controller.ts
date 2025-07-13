@@ -1,7 +1,7 @@
 import { Controller, UseGuards, Post, Req } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RefreshTokenGuard } from './guards/refreshToken.guard';
-import { JwtPayload } from './auth.types';
+import { AuthenticatedRequest } from './auth.types';
 
 @Controller('auth')
 export class AuthController {
@@ -9,7 +9,7 @@ export class AuthController {
 
   @UseGuards(RefreshTokenGuard)
   @Post('refresh')
-  refreshToken(@Req() req: Request & { user: JwtPayload }) {
+  refreshToken(@Req() req: AuthenticatedRequest) {
     const user = req.user;
     return this.authService.refreshTokens(user.sub, user.email);
   }
