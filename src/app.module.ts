@@ -1,14 +1,14 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
-// import { AppDataSource } from './data-source';
 import { appConfig } from './config/app.config';
 import { dbConfig } from './config/db.config';
 import { JwtModule } from '@nestjs/jwt';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
+import { IAppConfig } from './config/config.types';
 
 @Module({
   imports: [
@@ -19,32 +19,24 @@ import { AuthModule } from './auth/auth.module';
     JwtModule.registerAsync({
       global: true,
       imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET', 'defaultSecretKey'),
-        signOptions: {
-          expiresIn: configService.get<string>('JWT_EXPIRES_IN', '1h'),
-        },
+      inject: [appConfig.KEY],
+      useFactory: (configService: IAppConfig) => ({
+        secret: configService.jwt.secret,
+        signOptions: { expiresIn: configService.jwt.expiresIn },
       }),
     }),
     ConfigModule.forRoot({
       isGlobal: true,
       load: [appConfig, dbConfig],
     }),
-    // TypeOrmModule.forRoot(AppDataSource.options),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        type: configService.get<'postgres'>('DB_TYPE', 'postgres'),
-        host: configService.get<string>('DB_HOST', 'localhost'),
-        port: configService.get<number>('DB_PORT', 5432),
-        username: configService.get<string>('DB_USERNAME', 'postgres'),
-        password: configService.get<string>('DB_PASSWORD', 'password'),
-        database: configService.get<string>('DB_DATABASE', 'mydb'),
-        autoLoadEntities: true,
-        synchronize: true, // Отключайте в продакшене!
-      }),
+      inject: [appConfig.KEY],
+      useFactory: (configService: IAppConfig) => {
+        return {
+          ...configService,
+        };
+      },
     }),
     UsersModule,
     AuthModule,

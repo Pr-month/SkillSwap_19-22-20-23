@@ -1,14 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
+// import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 
 @Injectable()
 export class UsersService {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  create(_createUserDto: CreateUserDto) {
-    return 'This action adds a new user';
-  }
+  // create(_createUserDto: CreateUserDto) {
+  //   return 'This action adds a new user';
+  // }
 
   findAll() {
     return `This action returns all users`;
@@ -25,6 +25,17 @@ export class UsersService {
 
   remove(id: number) {
     return `This action removes a #${id} user`;
+  }
+
+  // async create(userData: Partial<User>): Promise<User> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  create(_userData: Partial<User>): User {
+    // Создаём сущность пользователя (не сохраняется в базе)
+    // const user = this.usersRepository.create(userData);
+
+    // Сохраняем пользователя в базе
+    // return await this.usersRepository.save(user);
+    return {} as User;
   }
 
   // findByEmail(email: string) {
@@ -63,12 +74,12 @@ export class UsersService {
     } as unknown as User;
   }
 
-  async updateRefreshToken(
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _userId: string,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _refreshToken: string,
-  ): Promise<void> {
-    // await this.usersRepository.update(userId, { refreshToken });
-  }
+  // async updateRefreshToken(
+  //   // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  //   _userId: string,
+  //   // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  //   _refreshToken: string,
+  // ): Promise<void> {
+  //   // await this.usersRepository.update(userId, { refreshToken });
+  // }
 }

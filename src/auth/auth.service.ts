@@ -2,12 +2,15 @@ import {
   Injectable,
   ConflictException,
   UnauthorizedException,
+  Inject,
 } from '@nestjs/common';
 import { RegisterUserDto } from './dto/register-user.dto';
 import bcrypt from 'bcrypt';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { LoginUserDto } from './dto/login-user.dto';
+import { appConfig } from '../config/app.config';
+import { ConfigType } from '@nestjs/config';
 
 interface JwtPayload {
   sub: number;
@@ -19,6 +22,8 @@ export class AuthService {
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
+    @Inject(appConfig.KEY)
+    private readonly appConfiguration: ConfigType<typeof appConfig>,
   ) {}
 
   // метод регистрации с созданием пользователя
@@ -32,15 +37,22 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    return this.usersService.create({
+    const user = this.usersService.create({
       email,
       name,
       password: hashedPassword,
     });
+
+    const tokens = this._getTokens({ id: user.id, email: user.email });
+
+    return {
+      user,
+      ...tokens,
+    };
   }
 
   // метод обновления токенов
-  async refreshTokens(refreshToken: string) {
+  refreshTokens(refreshToken: string) {
     try {
       const payload = this.jwtService.verify<JwtPayload>(refreshToken, {
         secret: process.env.JWT_REFRESH_SECRET || 'refreshSecret',
@@ -51,25 +63,8 @@ export class AuthService {
         throw new UnauthorizedException('Неверный refresh токен');
       }
 
-      const newAccessToken = this.jwtService.sign({
-        sub: user.id,
-        email: user.email,
-      });
-      const newRefreshToken = this.jwtService.sign(
-        { sub: user.id, email: user.email },
-        {
-          secret: process.env.JWT_REFRESH_SECRET || 'refreshSecret',
-          expiresIn: '7d',
-        },
-      );
+      return this._getTokens({ id: user.id, email: user.email });
 
-      // Сохраняем новый refresh токен
-      await this.usersService.updateRefreshToken(user.id, newRefreshToken);
-
-      return {
-        accessToken: newAccessToken,
-        refreshToken: newRefreshToken,
-      };
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (e) {
       throw new UnauthorizedException('Неверный refresh токен');
@@ -89,24 +84,7 @@ export class AuthService {
       throw new UnauthorizedException('Неверный email или пароль');
     }
 
-    const accessToken = this.jwtService.sign({
-      sub: user.id,
-      email: user.email,
-    });
-    const refreshToken = this.jwtService.sign(
-      { sub: user.id, email: user.email },
-      {
-        secret: process.env.JWT_REFRESH_SECRET || 'refreshSecret',
-        expiresIn: '7d',
-      },
-    );
-
-    await this.usersService.updateRefreshToken(user.id, refreshToken);
-
-    return {
-      accessToken,
-      refreshToken,
-    };
+    return this._getTokens({ id: user.id, email: user.email });
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -118,5 +96,28 @@ export class AuthService {
     // }
     // user.refreshToken = null; // Удаляем refresh токен из БД
     // await this.usersRepository.save(user);
+    // или
+    // await this.usersService.updateRefreshToken(userId, null);
+  }
+
+  // private async _getTokens(user: { id: string; email: string; role?: string }) {
+  private _getTokens(user: { id: string; email: string; role?: string }) {
+    const payload = { sub: user.id, email: user.email };
+
+    const accessToken = this.jwtService.sign(payload, {
+      secret: this.appConfiguration.jwt.secret,
+      expiresIn: this.appConfiguration.jwt.expiresIn,
+    });
+
+    const refreshToken = this.jwtService.sign(payload, {
+      secret: this.appConfiguration.jwt.secret,
+      expiresIn: this.appConfiguration.jwt.refreshExpiresIn,
+    });
+
+    // await this.usersRepository.update(user.id, { refreshToken });
+    return {
+      accessToken,
+      refreshToken,
+    };
   }
 }
