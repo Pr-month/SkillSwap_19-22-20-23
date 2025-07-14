@@ -43,7 +43,7 @@ export class AuthService {
       password: hashedPassword,
     });
 
-    const tokens = this._getTokens({ id: user.id, email: user.email });
+    const tokens = await this._getTokens({ id: user.id, email: user.email });
 
     return {
       user,
@@ -52,21 +52,14 @@ export class AuthService {
   }
 
   // метод обновления токенов
-  async refreshTokens(refreshToken: string) {
+  async refreshTokens(authUser: JwtPayload) {
     try {
-      const payload = await this.jwtService.verifyAsync<JwtPayload>(
-        refreshToken,
-        {
-          secret: this.appConfiguration.jwt.secret,
-        },
-      );
-
-      const user = this.usersService.findById(payload.sub);
-      if (!user || user.refreshToken !== refreshToken) {
+      const user = this.usersService.findById(authUser.sub);
+      if (!user || user.refreshToken) {
         throw new UnauthorizedException('Неверный refresh токен');
       }
 
-      return this._getTokens({ id: user.id, email: user.email });
+      return await this._getTokens({ id: user.id, email: user.email });
 
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (e) {
@@ -104,17 +97,17 @@ export class AuthService {
   }
 
   // private async _getTokens(user: { id: string; email: string; role?: string }) {
-  private _getTokens(user: { id: string; email: string; role?: string }) {
+  private async _getTokens(user: { id: string; email: string; role?: string }) {
     const payload = { sub: user.id, email: user.email };
 
-    const accessToken = this.jwtService.sign(payload, {
-      secret: this.appConfiguration.jwt.secret,
-      expiresIn: this.appConfiguration.jwt.expiresIn,
+    const accessToken = await this.jwtService.signAsync(payload, {
+      secret: this.appConfiguration.jwt.accessTokenSecret,
+      expiresIn: this.appConfiguration.jwt.accessTokenExpiration,
     });
 
-    const refreshToken = this.jwtService.sign(payload, {
-      secret: this.appConfiguration.jwt.secret,
-      expiresIn: this.appConfiguration.jwt.refreshExpiresIn,
+    const refreshToken = await this.jwtService.signAsync(payload, {
+      secret: this.appConfiguration.jwt.refreshTokenSecret,
+      expiresIn: this.appConfiguration.jwt.refreshTokenExpiration,
     });
 
     // await this.usersRepository.update(user.id, { refreshToken });

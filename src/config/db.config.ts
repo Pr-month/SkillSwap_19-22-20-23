@@ -12,6 +12,6 @@ export const dbConfig = registerAs(
     database: process.env.DB_NAME || 'skillswap',
     synchronize: true, // В продакшене обязательно false!
     logging: false,
-     entities: [__dirname + '/../**/*.entity{.ts,.js}'],
+    entities: [__dirname + '/../**/*.entity{.ts,.js}'],
   }),
 );

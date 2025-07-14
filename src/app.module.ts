@@ -1,16 +1,15 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { JwtModule } from '@nestjs/jwt';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { appConfig } from './config/app.config';
-import { dbConfig } from './config/db.config';
-import { JwtModule } from '@nestjs/jwt';
-import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { AccessTokenStrategy } from './auth/strategies/accessToken.strategies';
-import { RefreshTokenStrategy } from './auth/strategies/refreshToken.strategies';
+import { appConfig } from './config/app.config';
 import { IAppConfig } from './config/config.types';
+import { dbConfig } from './config/db.config';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -19,8 +18,8 @@ import { IAppConfig } from './config/config.types';
       imports: [ConfigModule],
       inject: [appConfig.KEY],
       useFactory: (configService: IAppConfig) => ({
-        secret: configService.jwt.secret,
-        signOptions: { expiresIn: configService.jwt.expiresIn },
+        secret: configService.jwt.accessTokenSecret,
+        signOptions: { expiresIn: configService.jwt.accessTokenExpiration },
       }),
     }),
     ConfigModule.forRoot({
@@ -40,7 +39,7 @@ import { IAppConfig } from './config/config.types';
     AuthModule,
   ],
   controllers: [AppController],
-  providers: [AppService, AccessTokenStrategy, RefreshTokenStrategy],
+  providers: [AppService, AccessTokenStrategy],
   exports: [JwtModule],
 })
 export class AppModule {}
