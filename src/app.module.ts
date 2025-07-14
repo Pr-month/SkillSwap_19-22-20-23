@@ -8,14 +8,12 @@ import { dbConfig } from './config/db.config';
 import { JwtModule } from '@nestjs/jwt';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
+import { AccessTokenStrategy } from './auth/strategies/accessToken.strategies';
+import { RefreshTokenStrategy } from './auth/strategies/refreshToken.strategies';
 import { IAppConfig } from './config/config.types';
 
 @Module({
   imports: [
-    // JwtModule.register({
-    //   secret: process.env.JWT_SECRET || 'defaultSecretKey',
-    //   signOptions: { expiresIn: '1h' },
-    // }),
     JwtModule.registerAsync({
       global: true,
       imports: [ConfigModule],
@@ -42,7 +40,7 @@ import { IAppConfig } from './config/config.types';
     AuthModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, AccessTokenStrategy, RefreshTokenStrategy],
   exports: [JwtModule],
 })
 export class AppModule {}

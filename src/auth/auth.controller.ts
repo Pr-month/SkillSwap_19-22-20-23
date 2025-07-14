@@ -11,6 +11,8 @@ import { AuthService } from './auth.service';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { LoginUserDto } from './dto/login-user.dto';
+import { RefreshTokenGuard } from './guards/refreshToken.guard';
+import { AuthenticatedRequest } from './auth.types';
 
 @Controller('auth')
 export class AuthController {
@@ -20,12 +22,6 @@ export class AuthController {
   @HttpCode(HttpStatus.CREATED)
   async register(@Body() registerDto: RegisterUserDto) {
     return this.authService.register(registerDto);
-  }
-
-  @Post('refresh')
-  @HttpCode(HttpStatus.OK)
-  async refresh(@Body() refreshDto: RefreshTokenDto) {
-    return this.authService.refreshTokens(refreshDto.refreshToken);
   }
 
   @Post('login')
@@ -51,5 +47,12 @@ export class AuthController {
     // res.clearCookie('refresh_token');
 
     return { message: 'Вы успешно вышли из системы' };
+  }
+
+  @UseGuards(RefreshTokenGuard)
+  @Post('refresh')
+  refreshToken(@Req() req: AuthenticatedRequest) {
+    const user = req.user;
+    return this.authService.refreshTokens(user.sub, user.email);
   }
 }
