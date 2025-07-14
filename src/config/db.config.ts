@@ -6,4 +6,5 @@ export const dbConfig = registerAs('db', () => ({
   username: process.env.DB_USER || 'postgres',
   password: process.env.DB_PASSWORD || 'password',
   name: process.env.DB_NAME || 'skillswap',
+  entities: [__dirname + '/../**/*.entity{.ts,.js}'],
 }));
