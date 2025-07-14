@@ -1,32 +1,45 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { JwtModule } from '@nestjs/jwt';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { AppDataSource } from './data-source';
-import { appConfig } from './config/app.config';
-import { dbConfig } from './config/db.config';
-import { JwtModule } from '@nestjs/jwt';
-import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { AccessTokenStrategy } from './auth/strategies/accessToken.strategies';
-import { RefreshTokenStrategy } from './auth/strategies/refreshToken.strategies';
+import { appConfig } from './config/app.config';
+import { IAppConfig } from './config/config.types';
+import { dbConfig } from './config/db.config';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
-    JwtModule.register({
-      secret: process.env.JWT_SECRET || 'defaultSecretKey',
+    JwtModule.registerAsync({
+      global: true,
+      imports: [ConfigModule],
+      inject: [appConfig.KEY],
+      useFactory: (configService: IAppConfig) => ({
+        secret: configService.jwt.accessTokenSecret,
+        signOptions: { expiresIn: configService.jwt.accessTokenExpiration },
+      }),
     }),
     ConfigModule.forRoot({
       isGlobal: true,
       load: [appConfig, dbConfig],
     }),
-    TypeOrmModule.forRoot(AppDataSource.options),
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [dbConfig.KEY],
+      useFactory: (configService: IAppConfig) => {
+        return {
+          ...configService,
+        };
+      },
+    }),
     UsersModule,
     AuthModule,
   ],
   controllers: [AppController],
-  providers: [AppService, AccessTokenStrategy, RefreshTokenStrategy],
+  providers: [AppService, AccessTokenStrategy],
   exports: [JwtModule],
 })
 export class AppModule {}
