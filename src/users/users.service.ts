@@ -2,10 +2,10 @@ import { Injectable } from '@nestjs/common';
 // import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
+import { CreateUserDto } from './dto/create-user.dto';
 
 @Injectable()
 export class UsersService {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   // create(_createUserDto: CreateUserDto) {
   //   return 'This action adds a new user';
   // }
@@ -29,7 +29,7 @@ export class UsersService {
 
   // async create(userData: Partial<User>): Promise<User> {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  create(_userData: Partial<User>): User {
+  create(_userData: CreateUserDto): User {
     // Создаём сущность пользователя (не сохраняется в базе)
     // const user = this.usersRepository.create(userData);
 

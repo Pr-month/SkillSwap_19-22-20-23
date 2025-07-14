@@ -1,16 +1,16 @@
 import {
-  Injectable,
   ConflictException,
-  UnauthorizedException,
   Inject,
+  Injectable,
+  UnauthorizedException,
 } from '@nestjs/common';
-import { RegisterUserDto } from './dto/register-user.dto';
-import bcrypt from 'bcrypt';
-import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
-import { LoginUserDto } from './dto/login-user.dto';
+import bcrypt from 'bcrypt';
+import { IAppConfig } from 'src/config/config.types';
 import { appConfig } from '../config/app.config';
-import { ConfigType } from '@nestjs/config';
+import { UsersService } from '../users/users.service';
+import { LoginUserDto } from './dto/login-user.dto';
+import { RegisterUserDto } from './dto/register-user.dto';
 
 interface JwtPayload {
   sub: number;
@@ -23,7 +23,7 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     @Inject(appConfig.KEY)
-    private readonly appConfiguration: ConfigType<typeof appConfig>,
+    private readonly appConfiguration: IAppConfig,
   ) {}
 
   // метод регистрации с созданием пользователя
@@ -52,11 +52,14 @@ export class AuthService {
   }
 
   // метод обновления токенов
-  refreshTokens(refreshToken: string) {
+  async refreshTokens(refreshToken: string) {
     try {
-      const payload = this.jwtService.verify<JwtPayload>(refreshToken, {
-        secret: process.env.JWT_REFRESH_SECRET || 'refreshSecret',
-      });
+      const payload = await this.jwtService.verifyAsync<JwtPayload>(
+        refreshToken,
+        {
+          secret: this.appConfiguration.jwt.secret,
+        },
+      );
 
       const user = this.usersService.findById(payload.sub);
       if (!user || user.refreshToken !== refreshToken) {

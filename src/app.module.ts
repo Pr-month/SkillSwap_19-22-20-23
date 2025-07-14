@@ -31,7 +31,7 @@ import { IAppConfig } from './config/config.types';
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
-      inject: [appConfig.KEY],
+      inject: [dbConfig.KEY],
       useFactory: (configService: IAppConfig) => {
         return {
           ...configService,
