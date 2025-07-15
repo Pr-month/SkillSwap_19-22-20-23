@@ -4,9 +4,12 @@ import { ConfigService, ConfigType } from '@nestjs/config';
 import { appConfig } from './config/app.config';
 import { ValidationPipe } from '@nestjs/common';
 import { AllExceptionFilter } from './common/all-exception.filter';
+import { WinstonLogger } from './logger/winston.logger';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    logger: new WinstonLogger(),
+  });
 
   app.useGlobalFilters(new AllExceptionFilter());
 
@@ -20,6 +23,10 @@ async function bootstrap() {
 
   const configService = app.get(ConfigService);
   const appCnfg = configService.get<ConfigType<typeof appConfig>>('app');
+
+  const logger = app.get(WinstonLogger);
+  logger.log(`Server started on port ${appCnfg?.port || 3000}`, 'Bootstrap');
+
   await app.listen(appCnfg?.port || 3000);
 }
 void bootstrap();
