@@ -10,6 +10,7 @@ import { appConfig } from './config/app.config';
 import { IAppConfig } from './config/config.types';
 import { dbConfig } from './config/db.config';
 import { UsersModule } from './users/users.module';
+import { SkillsModule } from './skills/skills.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { UsersModule } from './users/users.module';
     }),
     UsersModule,
     AuthModule,
+    SkillsModule,
   ],
   controllers: [AppController],
   providers: [AppService, AccessTokenStrategy],
