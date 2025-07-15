@@ -1,85 +1,111 @@
-import { Injectable } from '@nestjs/common';
-// import { CreateUserDto } from './dto/create-user.dto';
+import {
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import bcrypt from 'bcrypt';
+import { PaginationQueryDto } from './dto/pagination-query.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 
 @Injectable()
 export class UsersService {
-  // create(_createUserDto: CreateUserDto) {
-  //   return 'This action adds a new user';
-  // }
+  constructor(
+    @InjectRepository(User)
+    private readonly usersRepository: Repository<User>,
+  ) {}
 
-  findAll() {
-    return `This action returns all users`;
+  async findAll(paginationQuery: PaginationQueryDto): Promise<User[]> {
+    const page = Math.max(paginationQuery.page || 1, 1);
+    const limit = Math.min(Math.max(paginationQuery.limit || 20, 1), 100);
+
+    return this.usersRepository.find({
+      relations: ['skills'], // загружаем связь skills
+      skip: (page - 1) * limit,
+      take: limit,
+    });
   }
 
-  // findOne(id: number) {
-  //   return `This action returns a #${id} user`;
-  // }
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  update(id: number, _updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
+  findOne(id: number) {
+    return `This action returns a #${id} user`;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+  async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
+    const { skills, wantToLearn, favoriteSkills, ...simpleFields } =
+      updateUserDto;
+
+    void skills;
+    void wantToLearn;
+    void favoriteSkills;
+
+    await this.usersRepository.update(id, simpleFields);
+
+    const updatedUser = await this.findById(id);
+    if (!updatedUser) {
+      throw new NotFoundException(`Пользователь с id ${id} не найден`);
+    }
+    return updatedUser;
   }
 
-  // async create(userData: Partial<User>): Promise<User> {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  create(_userData: CreateUserDto): User {
-    // Создаём сущность пользователя (не сохраняется в базе)
-    // const user = this.usersRepository.create(userData);
-
-    // Сохраняем пользователя в базе
-    // return await this.usersRepository.save(user);
-    return {} as User;
+  async remove(id: number): Promise<void> {
+    const result = await this.usersRepository.delete(id);
+    if (result.affected === 0) {
+      throw new NotFoundException(`Пользователь с id ${id} не найден`);
+    }
   }
 
-  // findByEmail(email: string) {
-  //   return `Возврщает пользователя с таким #${email}`;
-  // }
+  async create(createUserDto: CreateUserDto): Promise<User> {
+    // Исключаем поля ссылок на связи, чтобы не передавать в create()
+    const { skills, wantToLearn, favoriteSkills, ...simpleFields } =
+      createUserDto;
+    void skills;
+    void wantToLearn;
+    void favoriteSkills;
 
-  findById(id: number): User {
-    // async findById(id: number): Promise<User> {
-    // const user = await this.usersRepository.findOne({ where: { id } });
-    // if (!user) {
-    //   throw new NotFoundException(`Пользователь с id ${id} не найден`);
-    // }
-    // return user;
+    const user = this.usersRepository.create(simpleFields);
 
-    // Временно возвращаем пустого пользователя с минимальным набором полей
-    return {
-      id,
-      email: '',
-      name: '',
-      password: '',
-      refreshToken: null,
-    } as unknown as User;
+    return this.usersRepository.save(user);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  findByEmail(_email: string): User {
-    // async findByEmail(email: string): Promise<User | null> {
-    // return await this.usersRepository.findOne({ where: { email } });
-    // }
-    // Временно возвращаем пустого пользователя с минимальным набором полей
-    return {
-      email: '',
-      name: '',
-      password: '',
-      refreshToken: null,
-    } as unknown as User;
+  async findByEmail(email: string): Promise<User | null> {
+    return this.usersRepository.findOne({ where: { email } });
   }
 
-  // async updateRefreshToken(
-  //   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  //   _userId: string,
-  //   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  //   _refreshToken: string,
-  // ): Promise<void> {
-  //   // await this.usersRepository.update(userId, { refreshToken });
-  // }
+  async findById(id: string): Promise<User | null> {
+    return this.usersRepository.findOne({ where: { id } });
+  }
+
+  async updateRefreshToken(
+    userId: string,
+    refreshToken: string | null,
+  ): Promise<void> {
+    await this.usersRepository.update(userId, {
+      refreshToken: refreshToken ?? undefined,
+    });
+  }
+
+  // Метод для обновления пароля
+  async updatePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<void> {
+    const user = await this.usersRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException('Пользователь не найден');
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      throw new UnauthorizedException('Текущий пароль неверен');
+    }
+
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedNewPassword;
+
+    await this.usersRepository.save(user);
+  }
 }

@@ -2,6 +2,7 @@ import {
   ConflictException,
   Inject,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -13,7 +14,7 @@ import { LoginUserDto } from './dto/login-user.dto';
 import { RegisterUserDto } from './dto/register-user.dto';
 
 interface JwtPayload {
-  sub: number;
+  sub: string;
   email: string;
 }
 
@@ -30,14 +31,14 @@ export class AuthService {
   async register(registerDto: RegisterUserDto) {
     const { email, password, name } = registerDto;
 
-    const existingUser = this.usersService.findByEmail(email);
+    const existingUser = await this.usersService.findByEmail(email);
     if (existingUser) {
       throw new ConflictException('Пользователь с таким email уже существует');
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const user = this.usersService.create({
+    const user = await this.usersService.create({
       email,
       name,
       password: hashedPassword,
@@ -52,24 +53,26 @@ export class AuthService {
   }
 
   // метод обновления токенов
-  async refreshTokens(authUser: JwtPayload) {
+  async refreshTokens(refreshToken: string) {
     try {
-      const user = this.usersService.findById(authUser.sub);
-      if (!user || user.refreshToken) {
+      const payload = this.jwtService.verify<JwtPayload>(refreshToken, {
+        secret: this.appConfiguration.jwt.refreshTokenSecret,
+      });
+
+      const user = await this.usersService.findById(payload.sub);
+      if (!user || user.refreshToken !== refreshToken) {
         throw new UnauthorizedException('Неверный refresh токен');
       }
 
       return await this._getTokens({ id: user.id, email: user.email });
-
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (e) {
+    } catch {
       throw new UnauthorizedException('Неверный refresh токен');
     }
   }
 
   async login(loginDto: LoginUserDto) {
     const { email, password } = loginDto;
-    const user = this.usersService.findByEmail(email);
+    const user = await this.usersService.findByEmail(email);
 
     if (!user) {
       throw new UnauthorizedException('Неверный email или пароль');
@@ -80,23 +83,19 @@ export class AuthService {
       throw new UnauthorizedException('Неверный email или пароль');
     }
 
-    return this._getTokens({ id: user.id, email: user.email });
+    return await this._getTokens({ id: user.id, email: user.email });
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async logout(_userId: string): Promise<void> {
-    // пока нет репозитария
-    // const user = await this.usersRepository.findOne({ where: { id: userId } });
-    // if (!user) {
-    //   throw new NotFoundException('Пользователь не найден');
-    // }
-    // user.refreshToken = null; // Удаляем refresh токен из БД
-    // await this.usersRepository.save(user);
-    // или
-    // await this.usersService.updateRefreshToken(userId, null);
+  async logout(userId: string): Promise<void> {
+    const user = await this.usersService.findById(userId);
+    if (!user) {
+      throw new NotFoundException('Пользователь не найден');
+    }
+
+    // Удаляем refresh токен из БД
+    await this.usersService.updateRefreshToken(userId, null);
   }
 
-  // private async _getTokens(user: { id: string; email: string; role?: string }) {
   private async _getTokens(user: { id: string; email: string; role?: string }) {
     const payload = { sub: user.id, email: user.email };
 
@@ -110,7 +109,7 @@ export class AuthService {
       expiresIn: this.appConfiguration.jwt.refreshTokenExpiration,
     });
 
-    // await this.usersRepository.update(user.id, { refreshToken });
+    await this.usersService.updateRefreshToken(user.id, refreshToken);
     return {
       accessToken,
       refreshToken,
