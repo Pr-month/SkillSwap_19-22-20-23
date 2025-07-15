@@ -3,9 +3,12 @@ import { AppModule } from './app.module';
 import { ConfigService, ConfigType } from '@nestjs/config';
 import { appConfig } from './config/app.config';
 import { ValidationPipe } from '@nestjs/common';
+import { AllExceptionFilter } from './common/all-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  app.useGlobalFilters(new AllExceptionFilter());
 
   app.useGlobalPipes(
     new ValidationPipe({
