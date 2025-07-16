@@ -83,7 +83,12 @@ export class AuthService {
       throw new UnauthorizedException('Неверный email или пароль');
     }
 
-    return await this._getTokens({ id: user.id, email: user.email });
+    const tokens = await this._getTokens({ id: user.id, email: user.email });
+
+    return {
+      user,
+      ...tokens,
+    };
   }
 
   async logout(userId: string): Promise<void> {

@@ -10,6 +10,7 @@ import { Repository } from 'typeorm';
 import bcrypt from 'bcrypt';
 import { PaginationQueryDto } from './dto/pagination-query.dto';
 import { CreateUserDto } from './dto/create-user.dto';
+import { UpdatePasswordDto } from './dto/update-password.dto';
 
 @Injectable()
 export class UsersService {
@@ -18,36 +19,41 @@ export class UsersService {
     private readonly usersRepository: Repository<User>,
   ) {}
 
-  async findAll(paginationQuery: PaginationQueryDto): Promise<User[]> {
+  async findAll(
+    paginationQuery: PaginationQueryDto,
+  ): Promise<{ data: User[]; page: number; totalPages: number }> {
     const page = Math.max(paginationQuery.page || 1, 1);
     const limit = Math.min(Math.max(paginationQuery.limit || 20, 1), 100);
+    const totalCount = await this.usersRepository.count();
+    const totalPages = Math.ceil(totalCount / limit) || 1;
 
-    return this.usersRepository.find({
+    if (page > totalPages) {
+      throw new NotFoundException(`Страница ${page} не найдена`);
+    }
+
+    const data = await this.usersRepository.find({
       relations: ['skills'], // загружаем связь skills
       skip: (page - 1) * limit,
       take: limit,
     });
-  }
 
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
+    return {
+      data,
+      page,
+      totalPages,
+    };
   }
 
   async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
-    const { skills, wantToLearn, favoriteSkills, ...simpleFields } =
-      updateUserDto;
-
-    void skills;
-    void wantToLearn;
-    void favoriteSkills;
-
-    await this.usersRepository.update(id, simpleFields);
-
-    const updatedUser = await this.findById(id);
-    if (!updatedUser) {
-      throw new NotFoundException(`Пользователь с id ${id} не найден`);
-    }
-    return updatedUser;
+    const user = await this.usersRepository.findOneOrFail({
+      //Ищем пользователя
+      where: { id },
+    });
+    return await this.usersRepository.save({
+      //Сохраняем пользователя и новые данные
+      ...user,
+      ...updateUserDto,
+    });
   }
 
   async remove(id: number): Promise<void> {
@@ -58,14 +64,7 @@ export class UsersService {
   }
 
   async create(createUserDto: CreateUserDto): Promise<User> {
-    // Исключаем поля ссылок на связи, чтобы не передавать в create()
-    const { skills, wantToLearn, favoriteSkills, ...simpleFields } =
-      createUserDto;
-    void skills;
-    void wantToLearn;
-    void favoriteSkills;
-
-    const user = this.usersRepository.create(simpleFields);
+    const user = this.usersRepository.create(createUserDto);
 
     return this.usersRepository.save(user);
   }
@@ -75,7 +74,7 @@ export class UsersService {
   }
 
   async findById(id: string): Promise<User | null> {
-    return this.usersRepository.findOne({ where: { id } });
+    return this.usersRepository.findOneOrFail({ where: { id } });
   }
 
   async updateRefreshToken(
@@ -90,8 +89,7 @@ export class UsersService {
   // Метод для обновления пароля
   async updatePassword(
     userId: string,
-    currentPassword: string,
-    newPassword: string,
+    { currentPassword, newPassword }: UpdatePasswordDto,
   ): Promise<void> {
     const user = await this.usersRepository.findOne({ where: { id: userId } });
     if (!user) {

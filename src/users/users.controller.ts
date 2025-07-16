@@ -1,7 +1,6 @@
 import {
   Controller,
   Get,
-  Post,
   Body,
   Patch,
   Param,
@@ -13,7 +12,6 @@ import {
   Query,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { AccessTokenGuard } from '../auth/guards/accessToken.guard';
 import { AuthenticatedRequest } from 'src/auth/auth.types';
@@ -23,11 +21,6 @@ import { PaginationQueryDto } from './dto/pagination-query.dto';
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
-
-  @Post()
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.create(createUserDto);
-  }
 
   @Get()
   findAll(@Query() paginationQuery: PaginationQueryDto) {
@@ -67,11 +60,6 @@ export class UsersController {
     @Body() updatePasswordDto: UpdatePasswordDto,
   ) {
     const userId = req.user.sub;
-    const { currentPassword, newPassword } = updatePasswordDto;
-    await this.usersService.updatePassword(
-      userId,
-      currentPassword,
-      newPassword,
-    );
+    await this.usersService.updatePassword(userId, updatePasswordDto);
   }
 }

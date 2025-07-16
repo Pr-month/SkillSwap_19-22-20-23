@@ -50,6 +50,7 @@ export class AuthController {
 
   @UseGuards(RefreshTokenGuard)
   @Post('refresh')
+  @HttpCode(HttpStatus.OK)
   refreshToken(@Body('refreshToken') refreshToken: string) {
     return this.authService.refreshTokens(refreshToken);
   }
