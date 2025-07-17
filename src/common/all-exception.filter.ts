@@ -11,9 +11,10 @@ import { EntityNotFoundError } from 'typeorm/error/EntityNotFoundError';
 
 @Catch()
 export class AllExceptionFilter implements ExceptionFilter {
-  catch(exception: any, host: ArgumentsHost) {
+  catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
+    const request = ctx.getRequest<Request>();
 
     // По умолчанию 500
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
@@ -26,7 +27,10 @@ export class AllExceptionFilter implements ExceptionFilter {
     }
     // Обработка ошибки дубликата 23505
     else if (
-      exception?.code === '23505'
+      typeof exception === 'object' &&
+      exception !== null &&
+      'code' in exception &&
+      exception.code === '23505'
     ) {
       status = HttpStatus.CONFLICT;
       message = 'Ошибка дубликата: запись уже существует';
@@ -42,8 +46,8 @@ export class AllExceptionFilter implements ExceptionFilter {
       const res = exception.getResponse();
       if (typeof res === 'string') {
         message = res;
-      } else if (typeof res === 'object' && res['message']) {
-        message = res['message'];
+      } else if (typeof res === 'object' && res !== null && 'message' in res) {
+        message = (res as { message: unknown }).message as string;
       }
     }
 
@@ -51,7 +55,7 @@ export class AllExceptionFilter implements ExceptionFilter {
       statusCode: status,
       message,
       timestamp: new Date().toISOString(),
-      path: ctx.getRequest().url,
+      path: request.url,
     });
   }
 }

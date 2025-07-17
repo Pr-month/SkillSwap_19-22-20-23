@@ -10,6 +10,7 @@ import { appConfig } from './config/app.config';
 import { IAppConfig } from './config/config.types';
 import { dbConfig } from './config/db.config';
 import { UsersModule } from './users/users.module';
+import { WinstonLogger } from './logger/winston.logger';
 
 @Module({
   imports: [
@@ -39,7 +40,7 @@ import { UsersModule } from './users/users.module';
     AuthModule,
   ],
   controllers: [AppController],
-  providers: [AppService, AccessTokenStrategy],
+  providers: [AppService, AccessTokenStrategy, WinstonLogger],
   exports: [JwtModule],
 })
 export class AppModule {}
