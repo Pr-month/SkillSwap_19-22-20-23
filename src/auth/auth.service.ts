@@ -6,7 +6,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import bcrypt from 'bcrypt';
+import * as bcrypt from 'bcrypt';
 import { IAppConfig } from 'src/config/config.types';
 import { appConfig } from '../config/app.config';
 import { UsersService } from '../users/users.service';

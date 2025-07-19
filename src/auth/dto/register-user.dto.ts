@@ -1,4 +1,14 @@
-import { IsEmail, IsString, MinLength } from 'class-validator';
+import {
+  IsEmail,
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  Max,
+  Min,
+  MinLength,
+} from 'class-validator';
+import { Gender } from 'src/common/enums/user.enums';
 
 export class RegisterUserDto {
   @IsEmail()
@@ -11,4 +21,22 @@ export class RegisterUserDto {
   @IsString()
   @MinLength(6)
   password: string;
+
+  @IsString()
+  @IsOptional()
+  city?: string;
+
+  @IsInt()
+  @Min(0)
+  @Max(150)
+  @IsOptional()
+  age?: number;
+
+  @IsString()
+  @IsOptional()
+  aboutMe?: string;
+
+  @IsEnum(Gender)
+  @IsOptional()
+  gender?: Gender;
 }

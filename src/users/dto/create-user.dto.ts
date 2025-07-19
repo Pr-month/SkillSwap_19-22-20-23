@@ -34,6 +34,10 @@ export class CreateUserDto {
   @IsEnum(Gender)
   gender?: Gender;
 
+  @IsString()
+  @IsOptional()
+  aboutMe?: string;
+
   @IsOptional()
   @IsUrl()
   avatar?: string;
