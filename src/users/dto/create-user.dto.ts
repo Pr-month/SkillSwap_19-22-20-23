@@ -7,9 +7,6 @@ import {
   Max,
   IsEnum,
   IsUrl,
-  IsArray,
-  // ArrayNotEmpty,
-  IsUUID,
 } from 'class-validator';
 import { Role, Gender } from '../../common/enums/user.enums';
 
@@ -37,24 +34,13 @@ export class CreateUserDto {
   @IsEnum(Gender)
   gender?: Gender;
 
+  @IsString()
+  @IsOptional()
+  aboutMe?: string;
+
   @IsOptional()
   @IsUrl()
   avatar?: string;
-
-  @IsOptional()
-  @IsArray()
-  @IsUUID('all', { each: true })
-  skills?: string[]; // массив id навыков, которые создал пользователь
-
-  @IsOptional()
-  @IsArray()
-  @IsUUID('all', { each: true })
-  wantToLearn?: string[]; // массив id категорий навыков
-
-  @IsOptional()
-  @IsArray()
-  @IsUUID('all', { each: true })
-  favoriteSkills?: string[]; // массив id избранных навыков
 
   @IsOptional()
   @IsEnum(Role)
