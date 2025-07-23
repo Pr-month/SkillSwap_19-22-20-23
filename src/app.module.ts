@@ -10,6 +10,7 @@ import { appConfig } from './config/app.config';
 import { IAppConfig } from './config/config.types';
 import { dbConfig } from './config/db.config';
 import { UsersModule } from './users/users.module';
+import { SkillsModule } from './skills/skills.module';
 import { WinstonLogger } from './logger/winston.logger';
 
 @Module({
@@ -38,6 +39,7 @@ import { WinstonLogger } from './logger/winston.logger';
     }),
     UsersModule,
     AuthModule,
+    SkillsModule,
   ],
   controllers: [AppController],
   providers: [AppService, AccessTokenStrategy, WinstonLogger],
