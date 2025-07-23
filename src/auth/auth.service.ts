@@ -1,5 +1,4 @@
 import {
-  ConflictException,
   Inject,
   Injectable,
   NotFoundException,
@@ -30,11 +29,6 @@ export class AuthService {
   // метод регистрации с созданием пользователя
   async register(registerDto: RegisterUserDto) {
     const { email, password, name } = registerDto;
-
-    const existingUser = await this.usersService.findByEmail(email);
-    if (existingUser) {
-      throw new ConflictException('Пользователь с таким email уже существует');
-    }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
