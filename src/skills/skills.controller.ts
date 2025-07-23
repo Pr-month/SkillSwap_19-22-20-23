@@ -7,10 +7,14 @@ import {
   Param,
   Body,
   Query,
+  UseGuards,
+  Req,
 } from '@nestjs/common';
 import { SkillsService } from './skills.service';
-import { Skill } from './entities/skill.entity';
 import { PaginationQueryDto } from 'src/users/dto/pagination-query.dto';
+import { AccessTokenGuard } from 'src/auth/guards/accessToken.guard';
+import { CreateSkillDto } from './dto/create-skill.dto';
+import { AuthenticatedRequest } from 'src/auth/auth.types';
 
 @Controller('skills')
 export class SkillsController {
@@ -26,16 +30,23 @@ export class SkillsController {
     return this.skillsService.findById(id);
   }
 
+  @UseGuards(AccessTokenGuard)
   @Post()
-  create(@Body() skillData: Partial<Skill>) {
-    return this.skillsService.create(skillData);
+  create(@Body() skillData: CreateSkillDto, @Req() req: AuthenticatedRequest) {
+    return this.skillsService.create(skillData, req.user.sub);
   }
 
+  @UseGuards(AccessTokenGuard)
   @Patch(':id')
-  update(@Param('id') id: string, @Body() skillData: Partial<Skill>) {
-    return this.skillsService.update(id, skillData);
+  update(
+    @Param('id') id: string,
+    @Body() skillData: CreateSkillDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return this.skillsService.update(id, skillData, req.user.sub);
   }
 
+  @UseGuards(AccessTokenGuard)
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.skillsService.remove(id);
