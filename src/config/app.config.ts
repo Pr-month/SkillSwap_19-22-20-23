@@ -9,4 +9,8 @@ export const appConfig = registerAs('app', () => ({
     refreshTokenSecret: process.env.JWT_REFRESH_SECRET || 'superrefreshsecret',
     refreshTokenExpiration: process.env.REFRESH_TOKEN_EXPIRATION || '7d',
   },
+  upload: {
+    dir: './public',
+    fileSizeMax: 2 * 1024 * 1024,
+  },
 }));
