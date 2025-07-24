@@ -3,6 +3,7 @@ import { extname } from 'path';
 import { diskStorage } from 'multer';
 import { v4 as uuidv4 } from 'uuid';
 import { MulterOptions } from '@nestjs/platform-express/multer/interfaces/multer-options.interface';
+import { IAppConfig } from 'src/config/config.types';
 
 export const acceptedImageTypes = [
   'image/png',
@@ -11,9 +12,7 @@ export const acceptedImageTypes = [
   'image/gif',
 ];
 
-export function createMulterConfig(config: {
-  upload: { dir: string; fileSizeMax: number };
-}): MulterOptions {
+export function createMulterConfig(config: IAppConfig): MulterOptions {
   return {
     storage: diskStorage({
       destination: config.upload.dir, //Берем из конфига папку, куда будем загружать файлы
@@ -25,7 +24,7 @@ export function createMulterConfig(config: {
     limits: {
       fileSize: config.upload.fileSizeMax,
     },
-    fileFilter: (_req, file: File, cb) => {
+    fileFilter: (_req, file, cb) => {
       if (!acceptedImageTypes.includes(file.mimetype)) {
         return cb(
           new HttpException('Ожидается изображение', HttpStatus.BAD_REQUEST),

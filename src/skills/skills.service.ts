@@ -6,7 +6,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Skill } from './entities/skill.entity';
-import { PaginationQueryDto } from 'src/users/dto/pagination-query.dto';
+import { PaginationQueryDto } from './dto/pagination-query.dto';
 import { CreateSkillDto } from './dto/create-skill.dto';
 import { User } from 'src/users/entities/user.entity';
 import { Category } from 'src/categories/entities/category.entity';
@@ -17,7 +17,9 @@ export class SkillsService {
   constructor(
     @InjectRepository(Skill)
     private readonly skillsRepository: Repository<Skill>,
+    @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
+    @InjectRepository(Category)
     private readonly categoriesRepository: Repository<Category>,
   ) {}
 
@@ -78,19 +80,14 @@ export class SkillsService {
     ownerId: string,
   ): Promise<Skill> {
     const { categoryId, ...skillData } = createSkillDto;
-    const owner = await this.usersRepository.findOne({
+
+    const owner = await this.usersRepository.findOneOrFail({
       where: { id: ownerId },
     });
-    if (!owner) {
-      throw new NotFoundException(`Пользователь с ID ${ownerId} не найден.`);
-    }
 
-    const category = await this.categoriesRepository.findOne({
+    const category = await this.categoriesRepository.findOneOrFail({
       where: { id: categoryId },
     });
-    if (!category) {
-      throw new NotFoundException(`Категория с ID ${categoryId} не найдена.`);
-    }
 
     const skill = this.skillsRepository.create({
       ...skillData,
@@ -118,12 +115,9 @@ export class SkillsService {
     const { categoryId, ...skillData } = updateSkillDto;
 
     if (categoryId) {
-      const category = await this.categoriesRepository.findOne({
+      const category = await this.categoriesRepository.findOneOrFail({
         where: { id: categoryId },
       });
-      if (!category) {
-        throw new NotFoundException(`Категория с ID ${categoryId} не найдена`);
-      }
       skill.category = category;
     }
 

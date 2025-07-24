@@ -11,7 +11,7 @@ import {
   Req,
 } from '@nestjs/common';
 import { SkillsService } from './skills.service';
-import { PaginationQueryDto } from 'src/users/dto/pagination-query.dto';
+import { PaginationQueryDto } from './dto/pagination-query.dto';
 import { AccessTokenGuard } from 'src/auth/guards/accessToken.guard';
 import { CreateSkillDto } from './dto/create-skill.dto';
 import { AuthenticatedRequest } from 'src/auth/auth.types';
