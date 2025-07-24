@@ -7,10 +7,12 @@ import {
   Param,
   Delete,
   Request,
+  UseGuards,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { AccessTokenGuard } from 'src/auth/guards/accessToken.guard';
 
 @Controller('users')
 export class UsersController {
@@ -27,13 +29,14 @@ export class UsersController {
   }
 
   @Get('me')
+  @UseGuards(AccessTokenGuard)
   getCurrentUser(@Request() req: { user: { id: number } }) {
-    return this.usersService.findOne(req.user.id);
+    return this.usersService.findById(req.user.id);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.usersService.findOne(+id);
+  findOne(@Param('id') id: number) {
+    return this.usersService.findById(id);
   }
 
   @Patch(':id')
