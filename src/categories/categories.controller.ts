@@ -6,10 +6,12 @@ import {
   Delete,
   Param,
   Body,
+  UseGuards,
 } from '@nestjs/common';
 import { CategoriesService } from './categories.service';
 import { Category } from './entities/category.entity';
 import { CreateCategoryDto } from './dto/create-category.dto';
+import { AccessTokenGuard } from 'src/auth/guards/accessToken.guard';
 
 @Controller('categories')
 export class CategoriesController {
@@ -25,11 +27,13 @@ export class CategoriesController {
     return this.categoriesService.findById(id);
   }
 
+  @UseGuards(AccessTokenGuard)
   @Post()
   async create(@Body() createDto: CreateCategoryDto): Promise<Category> {
     return this.categoriesService.create(createDto);
   }
 
+  @UseGuards(AccessTokenGuard)
   @Patch(':id')
   async update(
     @Param('id') id: string,
@@ -42,6 +46,7 @@ export class CategoriesController {
     );
   }
 
+  @UseGuards(AccessTokenGuard)
   @Delete(':id')
   async remove(@Param('id') id: string): Promise<void> {
     return this.categoriesService.remove(id);
