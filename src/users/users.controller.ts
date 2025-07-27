@@ -12,6 +12,7 @@ import {
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { AuthenticatedRequest } from '../auth/auth.types';
 import { AccessTokenGuard } from 'src/auth/guards/accessToken.guard';
 
 @Controller('users')
@@ -30,8 +31,8 @@ export class UsersController {
 
   @Get('me')
   @UseGuards(AccessTokenGuard)
-  getCurrentUser(@Request() req: { user: { id: number } }) {
-    return this.usersService.findById(req.user.id);
+  getCurrentUser(@Request() req: AuthenticatedRequest) {
+    return this.usersService.findById(req.user.sub);
   }
 
   @Get(':id')
