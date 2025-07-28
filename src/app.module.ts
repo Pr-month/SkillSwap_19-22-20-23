@@ -13,6 +13,7 @@ import { UsersModule } from './users/users.module';
 import { SkillsModule } from './skills/skills.module';
 import { WinstonLogger } from './logger/winston.logger';
 import { FilesModule } from './files/files.module';
+import { RequestsModule } from './requests/requests.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { FilesModule } from './files/files.module';
     AuthModule,
     SkillsModule,
     FilesModule,
+    RequestsModule,
   ],
   controllers: [AppController],
   providers: [AppService, AccessTokenStrategy, WinstonLogger],
