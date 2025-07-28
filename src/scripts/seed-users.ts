@@ -2,8 +2,10 @@ import { DataSource } from 'typeorm';
 import { User } from '../users/entities/user.entity';
 import { Role } from '../common/enums/user.enums';
 import * as bcrypt from 'bcrypt';
+import * as dotenv from 'dotenv';
 import { dbConfig } from '../config/db.config';
 
+dotenv.config();
 const AppDataSource = new DataSource(dbConfig());
 
 async function seed() {
@@ -19,13 +21,25 @@ async function seed() {
     return;
   }
 
+  // Получаем емейл и пароль из env переменных
+  const adminEmail = process.env.ADMIN_EMAIL;
+  const adminPassword = process.env.ADMIN_PASSWORD;
+
+  if (!adminEmail || !adminPassword) {
+    console.error(
+      'Не заданы переменные окружения ADMIN_EMAIL или ADMIN_PASSWORD',
+    );
+    await AppDataSource.destroy();
+    process.exit(1);
+  }
+
   // Создаем администратора
   const admin = new User();
   admin.name = 'Admin';
-  admin.email = 'admin@example.com';
+  admin.email = adminEmail;
   // Хешируем пароль
   const saltRounds = 10;
-  admin.password = await bcrypt.hash('admin123', saltRounds);
+  admin.password = await bcrypt.hash(adminPassword, saltRounds);
   admin.role = Role.ADMIN;
 
   await userRepo.save(admin);

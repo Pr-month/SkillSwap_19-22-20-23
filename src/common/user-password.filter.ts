@@ -9,23 +9,24 @@ import { map } from 'rxjs/operators';
 
 @Injectable()
 export class UserPasswordFilter implements NestInterceptor {
-  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
+  intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     return next.handle().pipe(
-      map(data => {
+      map((data: unknown): unknown => {
         if (Array.isArray(data)) {
-          return data.map(item => {
-            if (item && typeof item === 'object') {
-              const { password, ...result } = item;
-              return result;
-            }
-            return item;
-          });
-        } else if (data && typeof data === 'object') {
-          const { password, ...result } = data;
-          return result;
+          return data.map((item) => this.omitPassword(item));
+        } else {
+          return this.omitPassword(data);
         }
-        return data;
       }),
     );
+  }
+
+  private omitPassword(obj: unknown): unknown {
+    if (obj && typeof obj === 'object' && !Array.isArray(obj)) {
+      const rest = { ...(obj as Record<string, unknown>) };
+      delete rest.password;
+      return rest;
+    }
+    return obj;
   }
 }

@@ -2,7 +2,9 @@ import { DataSource } from 'typeorm';
 import { Category } from '../categories/entities/category.entity';
 import { dbConfig } from '../config/db.config';
 import { CategoriesData } from './categories.data';
+import * as dotenv from 'dotenv';
 
+dotenv.config();
 const AppDataSource = new DataSource(dbConfig());
 
 async function seed() {
