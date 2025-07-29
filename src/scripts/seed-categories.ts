@@ -25,7 +25,7 @@ async function seed() {
 
     if (parentData.children && parentData.children.length > 0) {
       const childrenCategories = parentData.children.map((childName) =>
-        categoryRepo.create({ name: childName }),
+        categoryRepo.create({ name: childName, parent: parentCategory }),
       );
 
       for (const childCategory of childrenCategories) {
