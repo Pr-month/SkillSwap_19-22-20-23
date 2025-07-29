@@ -25,7 +25,7 @@ export class SkillsController {
 
   @Get()
   findAll(@Query() paginationQuery: PaginationQueryDto) {
-    return this.skillsService.findAll(paginationQuery);
+    return this.skillsService.findBySkill(paginationQuery);
   }
 
   @Get(':id')

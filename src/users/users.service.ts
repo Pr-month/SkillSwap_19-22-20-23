@@ -56,11 +56,13 @@ export class UsersService {
     });
   }
 
-  async remove(id: number): Promise<void> {
+  async remove(id: string): Promise<{ message: string }> {
     const result = await this.usersRepository.delete(id);
     if (result.affected === 0) {
       throw new NotFoundException(`Пользователь с id ${id} не найден`);
     }
+
+    return { message: `Пользователь с id ${id} успешно удалён` };
   }
 
   async create(createUserDto: CreateUserDto): Promise<User> {

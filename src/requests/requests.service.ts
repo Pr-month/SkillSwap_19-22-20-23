@@ -104,6 +104,7 @@ export class RequestsService {
 
     if (updateRequestDto.status !== undefined) {
       request.status = updateRequestDto.status;
+      request.isRead = true;
     }
     if (updateRequestDto.isRead !== undefined) {
       request.isRead = updateRequestDto.isRead;
