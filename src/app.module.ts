@@ -12,6 +12,7 @@ import { dbConfig } from './config/db.config';
 import { UsersModule } from './users/users.module';
 import { SkillsModule } from './skills/skills.module';
 import { WinstonLogger } from './logger/winston.logger';
+import { FilesModule } from './files/files.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { WinstonLogger } from './logger/winston.logger';
     UsersModule,
     AuthModule,
     SkillsModule,
+    FilesModule,
   ],
   controllers: [AppController],
   providers: [AppService, AccessTokenStrategy, WinstonLogger],

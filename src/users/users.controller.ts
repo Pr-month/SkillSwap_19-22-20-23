@@ -27,14 +27,15 @@ export class UsersController {
     return this.usersService.findAll(paginationQuery);
   }
 
+  @Get('me')
+  @UseGuards(AccessTokenGuard)
+  getCurrentUser(@Req() req: AuthenticatedRequest) {
+    return this.usersService.findById(req.user.sub);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.usersService.findById(id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.usersService.update(id, updateUserDto);
   }
 
   @Delete(':id')
