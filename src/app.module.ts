@@ -14,6 +14,7 @@ import { SkillsModule } from './skills/skills.module';
 import { WinstonLogger } from './logger/winston.logger';
 import { FilesModule } from './files/files.module';
 import { RequestsModule } from './requests/requests.module';
+import { CategoriesModule } from './categories/categories.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { RequestsModule } from './requests/requests.module';
     SkillsModule,
     FilesModule,
     RequestsModule,
+    CategoriesModule,
   ],
   controllers: [AppController],
   providers: [AppService, AccessTokenStrategy, WinstonLogger],
