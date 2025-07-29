@@ -82,7 +82,7 @@ export class UsersService {
     refreshToken: string | null,
   ): Promise<void> {
     await this.usersRepository.update(userId, {
-      refreshToken: refreshToken ?? undefined,
+      refreshToken: refreshToken,
     });
   }
 
