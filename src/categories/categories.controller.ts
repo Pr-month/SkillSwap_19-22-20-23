@@ -12,6 +12,9 @@ import { CategoriesService } from './categories.service';
 import { Category } from './entities/category.entity';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { AccessTokenGuard } from 'src/auth/guards/accessToken.guard';
+import { RolesGuard } from 'src/auth/decorators/roles.guard';
+import { Role } from 'src/common/enums/user.enums';
+import { HasRoles } from 'src/auth/decorators/roles.decorator';
 
 @Controller('categories')
 export class CategoriesController {
@@ -27,13 +30,15 @@ export class CategoriesController {
     return this.categoriesService.findById(id);
   }
 
-  @UseGuards(AccessTokenGuard)
+  @UseGuards(AccessTokenGuard, RolesGuard)
+  @HasRoles(Role.ADMIN)
   @Post()
   async create(@Body() createDto: CreateCategoryDto): Promise<Category> {
     return this.categoriesService.create(createDto);
   }
 
-  @UseGuards(AccessTokenGuard)
+  @UseGuards(AccessTokenGuard, RolesGuard)
+  @HasRoles(Role.ADMIN)
   @Patch(':id')
   async update(
     @Param('id') id: string,
@@ -46,7 +51,8 @@ export class CategoriesController {
     );
   }
 
-  @UseGuards(AccessTokenGuard)
+  @UseGuards(AccessTokenGuard, RolesGuard)
+  @HasRoles(Role.ADMIN)
   @Delete(':id')
   async remove(@Param('id') id: string): Promise<void> {
     return this.categoriesService.remove(id);
