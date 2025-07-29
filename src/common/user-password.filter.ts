@@ -22,10 +22,19 @@ export class UserPasswordFilter implements NestInterceptor {
   }
 
   private omitPassword(obj: unknown): unknown {
-    if (obj && typeof obj === 'object' && !Array.isArray(obj)) {
-      const rest = { ...(obj as Record<string, unknown>) };
-      delete rest.password;
-      return rest;
+    if (obj && typeof obj === 'object') {
+      if (Array.isArray(obj)) {
+        return obj.map((item) => this.omitPassword(item));
+      } else {
+        const rest: Record<string, unknown> = {};
+        for (const [key, value] of Object.entries(obj)) {
+          if (key === 'password' || key === 'refreshToken') {
+            continue;
+          }
+          rest[key] = this.omitPassword(value);
+        }
+        return rest;
+      }
     }
     return obj;
   }
