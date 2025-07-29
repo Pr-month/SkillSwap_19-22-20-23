@@ -10,6 +10,10 @@ import { appConfig } from './config/app.config';
 import { IAppConfig } from './config/config.types';
 import { dbConfig } from './config/db.config';
 import { UsersModule } from './users/users.module';
+import { SkillsModule } from './skills/skills.module';
+import { WinstonLogger } from './logger/winston.logger';
+import { FilesModule } from './files/files.module';
+import { RequestsModule } from './requests/requests.module';
 
 @Module({
   imports: [
@@ -37,9 +41,12 @@ import { UsersModule } from './users/users.module';
     }),
     UsersModule,
     AuthModule,
+    SkillsModule,
+    FilesModule,
+    RequestsModule,
   ],
   controllers: [AppController],
-  providers: [AppService, AccessTokenStrategy],
+  providers: [AppService, AccessTokenStrategy, WinstonLogger],
   exports: [JwtModule],
 })
 export class AppModule {}

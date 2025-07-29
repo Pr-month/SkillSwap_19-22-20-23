@@ -8,11 +8,12 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { AuthService } from './auth.service';
-import { AuthenticatedRequest } from './auth.types';
 import { LoginUserDto } from './dto/login-user.dto';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { RefreshTokenGuard } from './guards/refreshToken.guard';
+import { AuthenticatedRequest } from './auth.types';
 
 @Controller('auth')
 export class AuthController {
@@ -33,24 +34,24 @@ export class AuthController {
   @Post('logout')
   @HttpCode(HttpStatus.OK)
   async logout(
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    @Req() _req: Request,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    @Res({ passthrough: true }) _res: Response,
+    @Req() req: AuthenticatedRequest,
+    @Res({ passthrough: true }) res: Response,
   ) {
-    const userId = ''; //req.user['sub']; // Получаем id пользователя из payload JWT
+    const userId = req.user['sub']; // Получаем id пользователя из payload JWT
 
     await this.authService.logout(userId);
 
     // Очищаем куки с токенами, если они есть
-    // res.clearCookie('access_token');
-    // res.clearCookie('refresh_token');
+    res.clearCookie('access_token');
+    res.clearCookie('refresh_token');
 
     return { message: 'Вы успешно вышли из системы' };
   }
 
   @UseGuards(RefreshTokenGuard)
   @Post('refresh')
+  @HttpCode(HttpStatus.OK)
+  //refreshToken(@Body('refreshToken') refreshToken: string) {
   refreshToken(@Req() req: AuthenticatedRequest) {
     return this.authService.refreshTokens(req.user);
   }
