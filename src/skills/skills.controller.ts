@@ -1,6 +1,6 @@
 import {
   Controller,
-    UseInterceptors,
+  UseInterceptors,
   Get,
   Post,
   Patch,
