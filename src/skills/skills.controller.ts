@@ -1,5 +1,6 @@
 import {
   Controller,
+    UseInterceptors,
   Get,
   Post,
   Patch,
@@ -11,12 +12,14 @@ import {
   Req,
 } from '@nestjs/common';
 import { SkillsService } from './skills.service';
+import { UserPasswordFilter } from '../common/user-password.filter';
 import { PaginationQueryDto } from './dto/pagination-query.dto';
 import { AccessTokenGuard } from 'src/auth/guards/accessToken.guard';
 import { CreateSkillDto } from './dto/create-skill.dto';
 import { AuthenticatedRequest } from 'src/auth/auth.types';
 
 @Controller('skills')
+@UseInterceptors(UserPasswordFilter)
 export class SkillsController {
   constructor(private readonly skillsService: SkillsService) {}
 
