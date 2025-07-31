@@ -12,6 +12,7 @@ async function bootstrap() {
     logger: new WinstonLogger(),
   });
 
+  app.setGlobalPrefix('api');
   const config = new DocumentBuilder().setTitle('SkillSwap').build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, documentFactory);
