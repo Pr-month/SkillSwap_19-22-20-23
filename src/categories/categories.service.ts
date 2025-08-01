@@ -19,16 +19,6 @@ export class CategoriesService {
     });
   }
 
-  // Получить категорию по id
-  async findById(id: string): Promise<Category> {
-    const category = await this.categoriesRepository.findOneOrFail({
-      where: { id },
-      relations: ['parent', 'children', 'skills'],
-    });
-
-    return category;
-  }
-
   // Создать категорию
   async create(createCategoryDto: CreateCategoryDto): Promise<Category> {
     const { name, parentId } = createCategoryDto;
@@ -57,7 +47,10 @@ export class CategoriesService {
     name?: string,
     parentId?: string | null,
   ): Promise<Category> {
-    const category = await this.findById(id);
+    const category = await this.categoriesRepository.findOneOrFail({
+      where: { id },
+      relations: ['parent', 'children', 'skills'],
+    });
 
     if (name) {
       category.name = name;
@@ -79,7 +72,9 @@ export class CategoriesService {
 
   // Удалить категорию
   async remove(id: string): Promise<void> {
-    const category = await this.findById(id);
+    const category = await this.categoriesRepository.findOneOrFail({
+      where: { id },
+    });
     await this.categoriesRepository.remove(category);
   }
 }

@@ -89,7 +89,7 @@ export class AuthService {
   }
 
   private async _getTokens(user: { id: string; email: string; role?: string }) {
-    const payload = { sub: user.id, email: user.email };
+    const payload = { sub: user.id, email: user.email, role: user.role };
 
     const accessToken = await this.jwtService.signAsync(payload, {
       secret: this.appConfiguration.jwt.accessTokenSecret,

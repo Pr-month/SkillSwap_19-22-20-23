@@ -14,6 +14,7 @@ import { LoginUserDto } from './dto/login-user.dto';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { RefreshTokenGuard } from './guards/refreshToken.guard';
 import { AuthenticatedRequest } from './auth.types';
+import { AccessTokenGuard } from './guards/accessToken.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -31,13 +32,14 @@ export class AuthController {
     return this.authService.login(loginDto);
   }
 
+  @UseGuards(AccessTokenGuard)
   @Post('logout')
   @HttpCode(HttpStatus.OK)
   async logout(
     @Req() req: AuthenticatedRequest,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const userId = req.user['sub']; // Получаем id пользователя из payload JWT
+    const userId = req.user.sub; // Получаем id пользователя из payload JWT
 
     await this.authService.logout(userId);
 
