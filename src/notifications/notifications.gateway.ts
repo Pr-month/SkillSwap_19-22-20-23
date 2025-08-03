@@ -4,9 +4,10 @@ import {
   OnGatewayDisconnect,
   WebSocketServer,
 } from '@nestjs/websockets';
-import { Server, Socket } from 'socket.io';
+import { Server } from 'socket.io';
 import { UseGuards, Logger } from '@nestjs/common';
 import { WsJwtGuard } from './guards/ws-jwt.guard';
+import { SocketWithUser } from './types';
 
 interface NotifyPayload {
   type: string;
@@ -24,9 +25,9 @@ export class NotificationsGateway
 
   private logger = new Logger(NotificationsGateway.name);
 
-  async handleConnection(client: Socket) {
+  async handleConnection(client: SocketWithUser) {
     try {
-      const user = client.user;
+      const user = client.data.user;
       if (!user || !user.id) {
         this.logger.warn(`Connection rejected: no user id in token`);
         client.disconnect();
@@ -41,8 +42,8 @@ export class NotificationsGateway
     }
   }
 
-  handleDisconnect(client: Socket) {
-    const user = client.user;
+  handleDisconnect(client: SocketWithUser) {
+    const user = client.data.user;
     this.logger.log(`User disconnected: ${user?.id || 'unknown'}`);
   }
 

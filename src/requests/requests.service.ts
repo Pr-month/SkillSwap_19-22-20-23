@@ -83,7 +83,7 @@ export class RequestsService {
     // Отправляем уведомление владельцу навыка (receiver)
     this.notificationsGateway.notifyUser(receiver.id.toString(), {
       type: 'new_request',
-      skillName: requestedSkill.name,
+      skillName: requestedSkill.title,
       fromUser: sender.name,
     });
 
@@ -120,7 +120,7 @@ export class RequestsService {
 
       if (oldStatus !== updateRequestDto.status) {
         const requesterId = request.sender.id.toString();
-        const skillName = request.requestedSkill.name;
+        const skillName = request.requestedSkill.title;
         const skillOwnerName = request.receiver.name;
 
         if (updateRequestDto.status === RequestStatus.REJECTED) {
