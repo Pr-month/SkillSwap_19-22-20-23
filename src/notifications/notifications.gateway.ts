@@ -5,7 +5,7 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server } from 'socket.io';
-import { UseGuards, Logger } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 import { WsJwtGuard } from './guards/ws-jwt.guard';
 import { SocketWithUser } from './types';
 
@@ -15,8 +15,12 @@ interface NotifyPayload {
   fromUser: string;
 }
 
-@WebSocketGateway({ cors: { origin: '*' }, namespace: '/notifications' })
-@UseGuards(WsJwtGuard)
+const NOTIFICATIONS_PORT = Number(process.env.PORT) || 3000;
+
+@WebSocketGateway(NOTIFICATIONS_PORT, {
+  cors: { origin: '*' },
+  namespace: '/notifications',
+})
 export class NotificationsGateway
   implements OnGatewayConnection, OnGatewayDisconnect
 {
@@ -25,17 +29,20 @@ export class NotificationsGateway
 
   private logger = new Logger(NotificationsGateway.name);
 
+  constructor(private readonly jwtGuard: WsJwtGuard) {}
+
   async handleConnection(client: SocketWithUser) {
     try {
+      this.jwtGuard.verifyToken(client);
       const user = client.data.user;
-      if (!user || !user.id) {
+      if (!user || !user.sub) {
         this.logger.warn(`Connection rejected: no user id in token`);
         client.disconnect();
         return;
       }
 
-      client.join(user.id.toString());
-      this.logger.log(`User connected: ${user.id}`);
+      client.join(user.sub.toString());
+      this.logger.log(`User connected: ${user.sub}`);
     } catch (err) {
       this.logger.warn(`Error on connection: ${err.message}`);
       client.disconnect();
@@ -44,7 +51,7 @@ export class NotificationsGateway
 
   handleDisconnect(client: SocketWithUser) {
     const user = client.data.user;
-    this.logger.log(`User disconnected: ${user?.id || 'unknown'}`);
+    this.logger.log(`User disconnected: ${user?.sub || 'unknown'}`);
   }
 
   notifyUser(userId: string, payload: NotifyPayload) {
