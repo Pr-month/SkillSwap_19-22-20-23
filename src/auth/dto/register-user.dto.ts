@@ -4,6 +4,7 @@ import {
   IsInt,
   IsOptional,
   IsString,
+  IsUrl,
   Max,
   Min,
   MinLength,
@@ -39,4 +40,8 @@ export class RegisterUserDto {
   @IsEnum(Gender)
   @IsOptional()
   gender?: Gender;
+
+  @IsUrl()
+  @IsOptional()
+  avatar?: string;
 }

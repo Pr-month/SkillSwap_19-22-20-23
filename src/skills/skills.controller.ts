@@ -25,7 +25,7 @@ export class SkillsController {
 
   @Get()
   findAll(@Query() paginationQuery: PaginationQueryDto) {
-    return this.skillsService.findAll(paginationQuery);
+    return this.skillsService.findBySkill(paginationQuery);
   }
 
   @Get(':id')
@@ -53,5 +53,20 @@ export class SkillsController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.skillsService.remove(id);
+  }
+
+  @UseGuards(AccessTokenGuard)
+  @Post(':id/favorite')
+  addFavorite(@Param('id') skillId: string, @Req() req: AuthenticatedRequest) {
+    return this.skillsService.addFavoriteSkill(req.user.sub, skillId);
+  }
+
+  @UseGuards(AccessTokenGuard)
+  @Delete(':id/favorite')
+  removeFavorite(
+    @Param('id') skillId: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return this.skillsService.removeFavoriteSkill(req.user.sub, skillId);
   }
 }

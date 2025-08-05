@@ -50,6 +50,6 @@ export class User {
   @Column({ type: 'enum', enum: Role, default: Role.USER })
   role: Role;
 
-  @Column({ nullable: true })
-  refreshToken?: string;
+  @Column({ type: 'varchar', length: 255, nullable: true, default: null })
+  refreshToken?: string | null;
 }
