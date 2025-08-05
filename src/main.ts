@@ -1,4 +1,5 @@
 import { NestFactory } from '@nestjs/core';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { ConfigService, ConfigType } from '@nestjs/config';
 import { appConfig } from './config/app.config';
@@ -10,6 +11,11 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     logger: new WinstonLogger(),
   });
+
+  app.setGlobalPrefix('api');
+  const config = new DocumentBuilder().setTitle('SkillSwap').build();
+  const documentFactory = () => SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api/docs', app, documentFactory);
 
   app.useGlobalFilters(new AllExceptionFilter());
 

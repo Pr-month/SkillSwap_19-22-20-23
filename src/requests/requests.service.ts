@@ -10,6 +10,7 @@ import { CreateRequestDto } from './dto/create-request.dto';
 import { UpdateRequestDto } from './dto/update-request.dto';
 import { User } from '../users/entities/user.entity';
 import { Skill } from '../skills/entities/skill.entity';
+import { NotificationsGateway } from '../notifications/notifications.gateway';
 import { Role } from '../common/enums/user.enums';
 import { FindRequestsQueryDto } from './dto/find-requests-query.dto';
 
@@ -24,6 +25,8 @@ export class RequestsService {
 
     @InjectRepository(Skill)
     private skillsRepository: Repository<Skill>,
+
+    private readonly notificationsGateway: NotificationsGateway, // внедряем шлюз
   ) {}
 
   async create(
@@ -69,7 +72,16 @@ export class RequestsService {
       isRead: false,
     });
 
-    return this.requestsRepository.save(request);
+    const savedRequest = await this.requestsRepository.save(request);
+
+    // Отправляем уведомление владельцу навыка (receiver)
+    this.notificationsGateway.notifyUser(receiver.id.toString(), {
+      type: 'new_request',
+      skillName: requestedSkill.title,
+      fromUser: sender.name,
+    });
+
+    return savedRequest;
   }
 
   async findAll(
@@ -156,9 +168,31 @@ export class RequestsService {
     }
 
     if (updateRequestDto.status !== undefined) {
+      const oldStatus = request.status;
       request.status = updateRequestDto.status;
+
+      if (oldStatus !== updateRequestDto.status) {
+        const requesterId = request.sender.id.toString();
+        const skillName = request.requestedSkill.title;
+        const skillOwnerName = request.receiver.name;
+
+        if (updateRequestDto.status === RequestStatus.REJECTED) {
+          this.notificationsGateway.notifyUser(requesterId, {
+            type: 'request_rejected',
+            skillName,
+            fromUser: skillOwnerName,
+          });
+        } else if (updateRequestDto.status === RequestStatus.ACCEPTED) {
+          this.notificationsGateway.notifyUser(requesterId, {
+            type: 'request_accepted',
+            skillName,
+            fromUser: skillOwnerName,
+          });
+        }
+      }
       request.isRead = true;
     }
+
     if (updateRequestDto.isRead !== undefined) {
       request.isRead = updateRequestDto.isRead;
     }
