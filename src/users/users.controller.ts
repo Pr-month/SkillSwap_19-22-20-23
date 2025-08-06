@@ -44,6 +44,11 @@ export class UsersController {
     return this.usersService.findById(id);
   }
 
+  @Get('by-skill/:id')
+  findUsersBySkillCategory(@Param('id') id: string) {
+    return this.usersService.findUsersBySkillCategory(id);
+  }
+
   @UseGuards(AccessTokenGuard, RolesGuard)
   @HasRoles(Role.ADMIN)
   @Delete(':id')
