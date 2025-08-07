@@ -15,7 +15,7 @@ interface NotifyPayload {
   fromUser: string;
 }
 
-const NOTIFICATIONS_PORT = Number(process.env.PORT) || 3000;
+const NOTIFICATIONS_PORT = Number(process.env.PORT_NOTIFICATIONS) || 3001;
 
 @WebSocketGateway(NOTIFICATIONS_PORT, {
   cors: { origin: '*' },
@@ -41,10 +41,12 @@ export class NotificationsGateway
         return;
       }
 
-      client.join(user.sub.toString());
-      this.logger.log(`User connected: ${user.sub}`);
+      await client.join(user.sub.toString());
+      this.logger.log(`User  connected: ${user.sub}`);
     } catch (err) {
-      this.logger.warn(`Error on connection: ${err.message}`);
+      this.logger.warn(
+        `Error on connection: ${err instanceof Error ? err.message : String(err)}`,
+      );
       client.disconnect();
     }
   }
