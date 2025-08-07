@@ -24,6 +24,7 @@ import { Role } from 'src/common/enums/user.enums';
 import { HasRoles } from 'src/auth/decorators/roles.decorator';
 
 @Controller('users')
+@UseInterceptors(UserPasswordFilter)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
