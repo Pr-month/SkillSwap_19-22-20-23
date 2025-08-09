@@ -11,12 +11,16 @@ import * as bcrypt from 'bcrypt';
 import { PaginationQueryDto } from './dto/pagination-query.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
+import { Skill } from '../skills/entities/skill.entity';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
+
+    @InjectRepository(Skill)
+    private readonly skillsRepository: Repository<Skill>,
   ) {}
 
   async findAll(
@@ -77,6 +81,28 @@ export class UsersService {
 
   async findById(id: string): Promise<User | null> {
     return this.usersRepository.findOneOrFail({ where: { id } });
+  }
+
+  async findUsersBySkillCategory(skillId: string): Promise<User[]> {
+    const skill = await this.skillsRepository.findOneOrFail({
+      where: { id: skillId },
+      relations: ['category'],
+    });
+
+    const skillCategoryId = skill.category?.id;
+
+    if (!skillCategoryId) {
+      return [];
+    }
+
+    const users = await this.usersRepository
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.wantToLearn', 'category')
+      .where('category.id = :categoryId', { categoryId: skillCategoryId })
+      .limit(10)
+      .getMany();
+
+    return users;
   }
 
   async updateRefreshToken(
