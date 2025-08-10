@@ -22,6 +22,8 @@ import {
   ApiBearerAuth,
   ApiBody,
 } from '@nestjs/swagger';
+import { AuthResponseDto } from './dto/auth-response.dto';
+import { TokensResponseDto } from './dto/tokens-response.dto';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -34,6 +36,7 @@ export class AuthController {
   @ApiResponse({
     status: 201,
     description: 'Пользователь успешно зарегистрирован',
+    type: AuthResponseDto,
   })
   @ApiResponse({ status: 400, description: 'Некорректные данные в запросе' })
   @ApiBody({ type: RegisterUserDto })
@@ -44,7 +47,11 @@ export class AuthController {
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Вход пользователя' })
-  @ApiResponse({ status: 200, description: 'Успешный вход, возвращает токены' })
+  @ApiResponse({
+    status: 200,
+    description: 'Успешный вход, возвращает токены',
+    type: AuthResponseDto,
+  })
   @ApiResponse({ status: 401, description: 'Неверные учётные данные' })
   @ApiBody({ type: LoginUserDto })
   async login(@Body() loginDto: LoginUserDto) {
@@ -77,7 +84,11 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Обновление access и refresh токенов' })
   @ApiBearerAuth()
-  @ApiResponse({ status: 200, description: 'Токены успешно обновлены' })
+  @ApiResponse({
+    status: 200,
+    description: 'Токены успешно обновлены',
+    type: TokensResponseDto,
+  })
   @ApiResponse({
     status: 401,
     description: 'Не авторизован или недействительный refresh токен',
