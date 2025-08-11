@@ -1,0 +1,59 @@
+import { WsJwtGuard } from './ws-jwt.guard';
+import { JwtService } from '@nestjs/jwt';
+import { WsException } from '@nestjs/websockets';
+import { appConfig } from 'src/config/app.config';
+
+describe('WsJwtGuard', () => {
+  let guard: WsJwtGuard;
+  let jwtService: JwtService;
+  
+  const mockConfig = appConfig();
+
+  beforeEach(() => {
+    jwtService = new JwtService({});
+    guard = new WsJwtGuard(jwtService, mockConfig);
+  });
+
+  it('should throw WsException if token is not provided', () => {
+    const client = {
+      handshake: {
+        query: {},
+      },
+    } as any;
+
+    expect(() => guard.verifyToken(client)).toThrow(WsException);
+    expect(() => guard.verifyToken(client)).toThrow('Token not provided');
+  });
+
+  it('should throw WsException if token is invalid', () => {
+    const client = {
+      handshake: {
+        query: { token: 'invalid-token' },
+      },
+    } as any;
+
+    // Переопределим jwt.verify чтобы бросать ошибку
+    jest.spyOn(require('jsonwebtoken'), 'verify').mockImplementation(() => {
+      throw new Error('jwt malformed');
+    });
+
+    expect(() => guard.verifyToken(client)).toThrow(WsException);
+    expect(() => guard.verifyToken(client)).toThrow(/Invalid token/);
+  });
+
+  it('should assign user payload to client.data.user if token is valid', () => {
+    const userPayload = { userId: '123', username: 'testuser' };
+    const client = {
+      handshake: {
+        query: { token: 'valid-token' },
+      },
+      data: {},
+    } as any;
+
+    jest.spyOn(require('jsonwebtoken'), 'verify').mockImplementation(() => userPayload);
+
+    guard.verifyToken(client);
+
+    expect(client.data.user).toEqual(userPayload);
+  });
+});
