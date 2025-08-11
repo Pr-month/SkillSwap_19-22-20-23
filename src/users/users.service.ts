@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -127,6 +128,10 @@ export class UsersService {
     const isMatch = await bcrypt.compare(currentPassword, user.password);
     if (!isMatch) {
       throw new UnauthorizedException('Текущий пароль неверен');
+    }
+
+    if (currentPassword === newPassword) {
+      throw new BadRequestException('Новый и текущий пароли совпадают!');
     }
 
     const hashedNewPassword = await bcrypt.hash(newPassword, 10);

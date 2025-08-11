@@ -1,4 +1,5 @@
 import {
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -63,6 +64,20 @@ export class RequestsService {
       throw new NotFoundException(`Пользователь-получатель не найден`);
     }
 
+    const existingRequest = await this.requestsRepository.findOne({
+      where: {
+        sender: { id: senderId },
+        receiver: { id: receiver.id },
+        offeredSkill: { id: offeredSkillId },
+        requestedSkill: { id: requestedSkillId },
+        status: RequestStatus.PENDING,
+      },
+    });
+
+    if (existingRequest) {
+      throw new ConflictException('Такая заявка уже существует');
+    }
+
     const request = this.requestsRepository.create({
       sender,
       receiver,
@@ -109,13 +124,15 @@ export class RequestsService {
 
     if (query.type === 'incoming') {
       // текущий пользователь — получатель
-      qb.where('receiver.id = :userId', { id });
+      qb.where('receiver.id = :userId', { userId: id });
     } else if (query.type === 'outgoing') {
       // текущий пользователь — отправитель
-      qb.where('sender.id = :userId', { id });
+      qb.where('sender.id = :userId', { userId: id });
     } else {
       // если type не задан, показываем все заявления с участием пользователя (sender или receiver)
-      qb.where('(sender.id = :userId OR receiver.id = :userId)', { id });
+      qb.where('(sender.id = :userId OR receiver.id = :userId)', {
+        userId: id,
+      });
     }
 
     if (isReadFilter !== undefined) {

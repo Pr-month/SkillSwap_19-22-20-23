@@ -10,6 +10,7 @@ import {
   Query,
   UseGuards,
   Req,
+  HttpCode,
 } from '@nestjs/common';
 import { SkillsService } from './skills.service';
 import { UserPasswordFilter } from '../common/user-password.filter';
@@ -57,6 +58,7 @@ export class SkillsController {
 
   @UseGuards(AccessTokenGuard)
   @Post(':id/favorite')
+  @HttpCode(200)
   addFavorite(@Param('id') skillId: string, @Req() req: AuthenticatedRequest) {
     return this.skillsService.addFavoriteSkill(req.user.sub, skillId);
   }

@@ -1,4 +1,6 @@
 import {
+  BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -149,7 +151,7 @@ export class SkillsService {
       (s) => s.id === skill.id,
     );
     if (isAlreadyFavorite) {
-      return { message: 'Навык уже добавлен в избранное' };
+      throw new ConflictException('Навык уже добавлен в избранное');
     }
 
     user.favoriteSkills.push(skill);
@@ -171,7 +173,7 @@ export class SkillsService {
 
     const index = user.favoriteSkills.findIndex((s) => s.id === skillId);
     if (index === -1) {
-      return { message: 'Навык не найден в избранном' };
+      throw new BadRequestException('Навык не найден в избранном');
     }
 
     user.favoriteSkills.splice(index, 1);
