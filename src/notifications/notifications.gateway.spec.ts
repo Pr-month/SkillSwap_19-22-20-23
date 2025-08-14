@@ -1,21 +1,23 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotificationsGateway } from './notifications.gateway';
 import { WsJwtGuard } from './guards/ws-jwt.guard';
-import { SocketWithUser  } from './types';
+import { SocketWithUser } from './types';
 import { Server } from 'socket.io';
 
 describe('NotificationsGateway', () => {
   let gateway: NotificationsGateway;
   let mockServer: Server;
-  let mockClient: SocketWithUser ;
+  let mockClient: SocketWithUser;
   let mockJwtGuard: WsJwtGuard;
 
   beforeEach(async () => {
-    mockJwtGuard = { verifyToken: jest.fn() } as any;
+    mockJwtGuard = {
+      verifyToken: jest.fn(),
+    } as unknown as jest.Mocked<WsJwtGuard>;
     mockServer = {
       to: jest.fn().mockReturnThis(),
       emit: jest.fn(),
-    } as any;
+    } as unknown as jest.Mocked<Server>;
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -37,7 +39,7 @@ describe('NotificationsGateway', () => {
         data: { user: { sub: 'user123' } },
         join: jest.fn(),
         disconnect: jest.fn(),
-      } as any;
+      } as unknown as jest.Mocked<SocketWithUser>;
 
       mockJwtGuard.verifyToken = jest.fn().mockReturnValue(true);
 
@@ -51,7 +53,7 @@ describe('NotificationsGateway', () => {
       mockClient = {
         data: { user: {} },
         disconnect: jest.fn(),
-      } as any;
+      } as unknown as jest.Mocked<SocketWithUser>;
 
       await gateway.handleConnection(mockClient);
 
@@ -63,7 +65,7 @@ describe('NotificationsGateway', () => {
         data: { user: { sub: 'user123' } },
         join: jest.fn().mockRejectedValue(new Error('Connection error')),
         disconnect: jest.fn(),
-      } as any;
+      } as unknown as jest.Mocked<SocketWithUser>;
 
       await gateway.handleConnection(mockClient);
 
@@ -75,7 +77,7 @@ describe('NotificationsGateway', () => {
     it('should log when a user disconnects', () => {
       mockClient = {
         data: { user: { sub: 'user123' } },
-      } as any;
+      } as unknown as jest.Mocked<SocketWithUser>;
 
       gateway.handleDisconnect(mockClient);
     });
@@ -83,7 +85,7 @@ describe('NotificationsGateway', () => {
     it('should log when an unknown user disconnects', () => {
       mockClient = {
         data: { user: {} },
-      } as any;
+      } as unknown as jest.Mocked<SocketWithUser>;
 
       gateway.handleDisconnect(mockClient);
     });
@@ -91,11 +93,18 @@ describe('NotificationsGateway', () => {
 
   describe('notifyUser ', () => {
     it('should emit a notification to the specified user', () => {
-      const payload = { type: 'NEW_REQUEST', skillName: 'JavaScript', fromUser: 'user456' };
-      gateway.notifyUser ('user123', payload);
+      const payload = {
+        type: 'NEW_REQUEST',
+        skillName: 'JavaScript',
+        fromUser: 'user456',
+      };
+      gateway.notifyUser('user123', payload);
 
       expect(mockServer.to).toHaveBeenCalledWith('user123');
-      expect(mockServer.emit).toHaveBeenCalledWith('notificateNewRequest', payload);
+      expect(mockServer.emit).toHaveBeenCalledWith(
+        'notificateNewRequest',
+        payload,
+      );
     });
   });
 });

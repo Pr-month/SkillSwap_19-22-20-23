@@ -1,12 +1,13 @@
 import { WsJwtGuard } from './ws-jwt.guard';
 import { JwtService } from '@nestjs/jwt';
 import { WsException } from '@nestjs/websockets';
-import { appConfig } from 'src/config/app.config';
+import { appConfig } from '../../config/app.config';
+import { SocketWithUser } from '../types';
 
 describe('WsJwtGuard', () => {
   let guard: WsJwtGuard;
   let jwtService: JwtService;
-  
+
   const mockConfig = appConfig();
 
   beforeEach(() => {
@@ -19,7 +20,7 @@ describe('WsJwtGuard', () => {
       handshake: {
         query: {},
       },
-    } as any;
+    } as unknown as jest.Mocked<SocketWithUser>;
 
     expect(() => guard.verifyToken(client)).toThrow(WsException);
     expect(() => guard.verifyToken(client)).toThrow('Token not provided');
@@ -30,10 +31,9 @@ describe('WsJwtGuard', () => {
       handshake: {
         query: { token: 'invalid-token' },
       },
-    } as any;
+    } as unknown as jest.Mocked<SocketWithUser>;
 
-    // Переопределим jwt.verify чтобы бросать ошибку
-    jest.spyOn(require('jsonwebtoken'), 'verify').mockImplementation(() => {
+    jest.spyOn(jwtService, 'verify').mockImplementation(() => {
       throw new Error('jwt malformed');
     });
 
@@ -48,9 +48,9 @@ describe('WsJwtGuard', () => {
         query: { token: 'valid-token' },
       },
       data: {},
-    } as any;
+    } as unknown as jest.Mocked<SocketWithUser>;
 
-    jest.spyOn(require('jsonwebtoken'), 'verify').mockImplementation(() => userPayload);
+    jest.spyOn(jwtService, 'verify').mockImplementation(() => userPayload);
 
     guard.verifyToken(client);
 
