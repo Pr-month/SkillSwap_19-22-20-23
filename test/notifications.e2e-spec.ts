@@ -3,17 +3,29 @@ import { INestApplication } from '@nestjs/common';
 import { NotificationsGateway } from '../src/notifications/notifications.gateway';
 import { WsJwtGuard } from '../src/notifications/guards/ws-jwt.guard';
 import { io, Socket } from 'socket.io-client';
+import { Server } from 'http';
+import { SocketWithUser } from '../src/notifications/types';
 
 describe('NotificationsGateway (e2e)', () => {
   let app: INestApplication;
   let gateway: NotificationsGateway;
-  let jwtGuard: WsJwtGuard;
   let serverUrl: string;
-  let clientSocket: Socket;
+  let clientSocketUser1: Socket;
+  let clientSocketUser2: Socket;
 
-  const mockUser = { sub: '123' };
-  const mockVerifyToken = jest.fn((client) => {
-    client.data.user = mockUser;
+  const testUser1 = { sub: 'user1', email: 'user1@example.com', role: 'user' };
+  const testUser2 = { sub: 'user2', email: 'user2@example.com', role: 'user' };
+
+  const user1Token = 'token-user1';
+  const user2Token = 'token-user2';
+
+  const mockVerifyToken = jest.fn((client: SocketWithUser ) => {
+    const token = client.handshake.query.token;
+    if (token === user1Token) {
+      client.data.user = testUser1;
+    } else if (token === user2Token) {
+      client.data.user = testUser2;
+    }
   });
 
   beforeAll(async () => {
@@ -33,88 +45,92 @@ describe('NotificationsGateway (e2e)', () => {
     await app.init();
 
     gateway = moduleFixture.get<NotificationsGateway>(NotificationsGateway);
-    jwtGuard = moduleFixture.get<WsJwtGuard>(WsJwtGuard);
 
     await app.listen(0);
-    const address = app.getHttpServer().address();
-    const port = typeof address === 'string' ? parseInt(address.split(':').pop()!) : address?.port;
-    if (port === undefined) {
-      throw new Error('Could not determine the port');
-    }
+    const server = app.getHttpServer() as Server;
+    const address = server.address();
+    const port =
+      typeof address === 'string'
+        ? parseInt(address.split(':').pop()!)
+        : address?.port;
+
     serverUrl = `http://localhost:${port}/notifications`;
   });
 
   afterAll(async () => {
-    if (clientSocket) {
-      clientSocket.disconnect();
+    if (clientSocketUser1) {
+      clientSocketUser1.disconnect();
+    }
+    if (clientSocketUser2) {
+      clientSocketUser2.disconnect();
     }
     await app.close();
   });
 
-  it('should connect with valid token', (done) => {
-    clientSocket = io(serverUrl, {
-      auth: {
-        token: 'valid-token',
+  it('should connect user1 with valid token via query', (done) => {
+    clientSocketUser1 = io(serverUrl, {
+      query: {
+        token: user1Token,
       },
       transports: ['websocket'],
     });
 
-    clientSocket.on('connect', () => {
-      expect(clientSocket.connected).toBeTruthy();
+    clientSocketUser1.on('connect', () => {
+      expect(clientSocketUser1.connected).toBeTruthy();
       done();
     });
 
-    clientSocket.on('connect_error', (err) => {
+    clientSocketUser1.on('connect_error', (err) => {
       done(err);
     });
   });
 
-  it('should reject connection without user in token', (done) => {
-    mockVerifyToken.mockImplementationOnce((client) => { });
-
-    clientSocket = io(serverUrl, {
-      auth: {
+  it('should reject connection with invalid token', (done) => {
+    const clientSocketInvalid = io(serverUrl, {
+      query: {
         token: 'invalid-token',
       },
       transports: ['websocket'],
     });
 
-    clientSocket.on('connect', () => {
-      done(new Error('Should not connect'));
+    clientSocketInvalid.on('connect', () => {
+      clientSocketInvalid.disconnect();
+      done(new Error('Should not connect with an invalid token'));
     });
 
-    clientSocket.on('connect_error', () => {
+    clientSocketInvalid.on('connect_error', () => {
       done();
     });
   });
 
-  it('should receive notification event', (done) => {
-    clientSocket = io(serverUrl, {
-      auth: {
-        token: 'valid-token',
+  it('should receive notification event on user2 socket', (done) => {
+    clientSocketUser2 = io(serverUrl, {
+      query: {
+        token: user2Token,
       },
       transports: ['websocket'],
     });
 
-    clientSocket.on('connect', () => {
+    clientSocketUser2.on('connect', () => {
       const payload = {
         type: 'new_request',
         skillName: 'nestjs',
-        fromUser: 'user456',
+        fromUser: testUser1.sub,
       };
-      gateway.notifyUser(mockUser.sub, payload);
-    });
 
-    clientSocket.on('notificateNewRequest', (payload) => {
-      expect(payload).toEqual({
-        type: 'new_request',
-        skillName: 'nestjs',
-        fromUser: 'user456',
+      clientSocketUser2.once('notificateNewRequest', (receivedPayload) => {
+        try {
+          expect(receivedPayload).toEqual(payload);
+          done();
+        } catch (err) {
+          done(err);
+        }
       });
-      done();
+
+      gateway.notifyUser(testUser2.sub, payload);
     });
 
-    clientSocket.on('connect_error', (err) => {
+    clientSocketUser2.on('connect_error', (err) => {
       done(err);
     });
   });

@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { WsException } from '@nestjs/websockets';
 import { appConfig } from '../../config/app.config';
 import { SocketWithUser } from '../types';
+import * as jwt from 'jsonwebtoken';
 
 describe('WsJwtGuard', () => {
   let guard: WsJwtGuard;
@@ -50,7 +51,7 @@ describe('WsJwtGuard', () => {
       data: {},
     } as unknown as jest.Mocked<SocketWithUser>;
 
-    jest.spyOn(jwtService, 'verify').mockImplementation(() => userPayload);
+    jest.spyOn(jwt, 'verify').mockImplementation(() => userPayload);
 
     guard.verifyToken(client);
 

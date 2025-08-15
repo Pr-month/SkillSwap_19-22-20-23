@@ -41,12 +41,13 @@ describe('NotificationsGateway', () => {
         disconnect: jest.fn(),
       } as unknown as jest.Mocked<SocketWithUser>;
 
-      mockJwtGuard.verifyToken = jest.fn().mockReturnValue(true);
+      const verifyTokenSpy = jest.spyOn(mockJwtGuard, 'verifyToken');
+      const joinSpy = jest.spyOn(mockClient, 'join');
 
       await gateway.handleConnection(mockClient);
 
-      expect(mockJwtGuard.verifyToken).toHaveBeenCalledWith(mockClient);
-      expect(mockClient.join).toHaveBeenCalledWith('user123');
+      expect(verifyTokenSpy).toHaveBeenCalledWith(mockClient);
+      expect(joinSpy).toHaveBeenCalledWith('user123');
     });
 
     it('should disconnect the client if there is no user id in the token', async () => {
@@ -55,9 +56,11 @@ describe('NotificationsGateway', () => {
         disconnect: jest.fn(),
       } as unknown as jest.Mocked<SocketWithUser>;
 
+      const disconnectSpy = jest.spyOn(mockClient, 'disconnect');
+
       await gateway.handleConnection(mockClient);
 
-      expect(mockClient.disconnect).toHaveBeenCalled();
+      expect(disconnectSpy).toHaveBeenCalled();
     });
 
     it('should handle errors during connection', async () => {
@@ -67,9 +70,11 @@ describe('NotificationsGateway', () => {
         disconnect: jest.fn(),
       } as unknown as jest.Mocked<SocketWithUser>;
 
+      const disconnectSpy = jest.spyOn(mockClient, 'disconnect');
+
       await gateway.handleConnection(mockClient);
 
-      expect(mockClient.disconnect).toHaveBeenCalled();
+      expect(disconnectSpy).toHaveBeenCalled();
     });
   });
 
@@ -98,13 +103,13 @@ describe('NotificationsGateway', () => {
         skillName: 'JavaScript',
         fromUser: 'user456',
       };
+      const toSpy = jest.spyOn(mockServer, 'to');
+      const emitSpy = jest.spyOn(mockServer, 'emit');
+
       gateway.notifyUser('user123', payload);
 
-      expect(mockServer.to).toHaveBeenCalledWith('user123');
-      expect(mockServer.emit).toHaveBeenCalledWith(
-        'notificateNewRequest',
-        payload,
-      );
+      expect(toSpy).toHaveBeenCalledWith('user123');
+      expect(emitSpy).toHaveBeenCalledWith('notificateNewRequest', payload);
     });
   });
 });
