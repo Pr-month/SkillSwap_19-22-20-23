@@ -11,6 +11,16 @@ import {
 import { Category } from '../src/categories/entities/category.entity';
 import * as request from 'supertest';
 
+interface RequestResponse {
+  id: string;
+  status: RequestStatus;
+  isRead: boolean;
+  sender: { id: string; email: string; name: string };
+  receiver: { id: string; email: string; name: string };
+  offeredSkill: { id: string; title: string };
+  requestedSkill: { id: string; title: string };
+}
+
 describe('Requests e2e', () => {
   let app: INestApplication;
   let dataSource: DataSource;
@@ -42,7 +52,6 @@ describe('Requests e2e', () => {
   });
 
   beforeEach(async () => {
-    // Чистим таблицы
     await requestRepo.clear();
     await skillRepo.clear();
     await userRepo.clear();
@@ -93,7 +102,8 @@ describe('Requests e2e', () => {
       .get(`/requests/${foundRequest.id}`)
       .expect(200);
 
-    expect(res.body.id).toBe(foundRequest.id);
+    const body = res.body as RequestResponse;
+    expect(body.id).toBe(foundRequest.id);
   });
 
   it('PATCH /requests/:id', async () => {
@@ -106,8 +116,9 @@ describe('Requests e2e', () => {
       .send({ status: RequestStatus.ACCEPTED, isRead: true })
       .expect(200);
 
-    expect(res.body.status).toBe(RequestStatus.ACCEPTED);
-    expect(res.body.isRead).toBe(true);
+    const body = res.body as RequestResponse;
+    expect(body.status).toBe(RequestStatus.ACCEPTED);
+    expect(body.isRead).toBe(true);
   });
 
   it('DELETE /requests/:id', async () => {

@@ -19,7 +19,7 @@ describe('NotificationsGateway (e2e)', () => {
   const user1Token = 'token-user1';
   const user2Token = 'token-user2';
 
-  const mockVerifyToken = jest.fn((client: SocketWithUser ) => {
+  const mockVerifyToken = jest.fn((client: SocketWithUser) => {
     const token = client.handshake.query.token;
     if (token === user1Token) {
       client.data.user = testUser1;

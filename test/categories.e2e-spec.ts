@@ -6,6 +6,21 @@ import { Repository } from 'typeorm';
 import { Category } from '../src/categories/entities/category.entity';
 import { getRepositoryToken } from '@nestjs/typeorm';
 
+interface LoginResponse {
+  access_token: string;
+  refresh_token: string;
+  user: {
+    id: string;
+    email: string;
+    name: string;
+  };
+}
+
+interface CategoryResponse {
+  id: string;
+  name: string;
+}
+
 describe('CategoriesController (e2e)', () => {
   let app: INestApplication;
   let categoryRepo: Repository<Category>;
@@ -29,8 +44,11 @@ describe('CategoriesController (e2e)', () => {
       .send({
         email: process.env.ADMIN_EMAIL,
         password: process.env.ADMIN_PASSWORD,
-      });
-    adminToken = adminLogin.body.access_token;
+      })
+      .expect(200);
+
+    const body = adminLogin.body as LoginResponse;
+    adminToken = body.access_token;
   });
 
   afterAll(async () => {
@@ -42,6 +60,7 @@ describe('CategoriesController (e2e)', () => {
       const res = await request(app.getHttpServer())
         .get('/categories')
         .expect(200);
+
       expect(Array.isArray(res.body)).toBe(true);
     });
   });
@@ -54,8 +73,9 @@ describe('CategoriesController (e2e)', () => {
         .send({ name: 'Test Category' })
         .expect(201);
 
-      expect(res.body).toHaveProperty('id');
-      expect(res.body.name).toBe('Test Category');
+      const body = res.body as CategoryResponse;
+      expect(body).toHaveProperty('id');
+      expect(body.name).toBe('Test Category');
     });
 
     it('should fail if not admin', async () => {
@@ -81,7 +101,8 @@ describe('CategoriesController (e2e)', () => {
         .send({ name: 'Updated Category' })
         .expect(200);
 
-      expect(res.body.name).toBe('Updated Category');
+      const body = res.body as CategoryResponse;
+      expect(body.name).toBe('Updated Category');
     });
   });
 

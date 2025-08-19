@@ -4,8 +4,23 @@ import * as request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { Server } from 'http';
 import { AuthResponse } from './auth.e2e-spec';
+import { Response } from 'supertest';
 
 jest.setTimeout(30000);
+
+interface PaginatedUsersResponse {
+  items: Array<{ id: number; email: string; name: string }>;
+  total: number;
+  page: number;
+  limit: number;
+}
+
+interface UserResponse {
+  id: number;
+  email: string;
+  name: string;
+}
+
 describe('UsersController (e2e)', () => {
   let app: INestApplication;
   let server: Server;
@@ -26,16 +41,16 @@ describe('UsersController (e2e)', () => {
     app = moduleFixture.createNestApplication();
     app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
     await app.init();
-    server = app.getHttpServer();
+    server = app.getHttpServer() as Server;
 
-    const res = await request(server)
+    const res: Response = await request(server)
       .post('/api/auth/register')
       .send(testUser)
       .expect(201);
 
-    const body = res.body as AuthResponse;
-    accessToken = body.accessToken;
-    testUserId = body.user.id!;
+    const authResponse = res.body as AuthResponse;
+    accessToken = authResponse.accessToken;
+    testUserId = authResponse.user.id!;
   });
 
   afterAll(async () => {
@@ -49,8 +64,8 @@ describe('UsersController (e2e)', () => {
         .set('Authorization', `Bearer ${accessToken}`)
         .expect(200);
 
-      expect(res.body).toHaveProperty('items');
-      expect(Array.isArray(res.body.items)).toBe(true);
+      const body = res.body as PaginatedUsersResponse;
+      expect(Array.isArray(body.items)).toBe(true);
     });
   });
 
@@ -61,7 +76,8 @@ describe('UsersController (e2e)', () => {
         .set('Authorization', `Bearer ${accessToken}`)
         .expect(200);
 
-      expect(res.body.email).toBe(testUser.email);
+      const body = res.body as UserResponse;
+      expect(body.email).toBe(testUser.email);
     });
 
     it('should return 401 if not authorized', async () => {
@@ -78,7 +94,8 @@ describe('UsersController (e2e)', () => {
         .send({ name: updatedName })
         .expect(200);
 
-      expect(res.body.name).toBe(updatedName);
+      const body = res.body as UserResponse;
+      expect(body.name).toBe(updatedName);
     });
   });
 
@@ -96,7 +113,8 @@ describe('UsersController (e2e)', () => {
         .send({ email: testUser.email, password: newPassword })
         .expect(200);
 
-      expect(loginRes.body.accessToken).toBeDefined();
+      const body = loginRes.body as AuthResponse;
+      expect(body.accessToken).toBeDefined();
     });
 
     it('should fail with wrong current password', async () => {
