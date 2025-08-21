@@ -1,4 +1,5 @@
 import { NestFactory } from '@nestjs/core';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { ConfigService, ConfigType } from '@nestjs/config';
 import { appConfig } from './config/app.config';
@@ -11,6 +12,14 @@ async function bootstrap() {
     logger: new WinstonLogger(),
   });
 
+  const configService = app.get(ConfigService);
+  const appCnfg = configService.get<ConfigType<typeof appConfig>>('app');
+
+  app.setGlobalPrefix(appCnfg?.nodeEnv === 'production' ? 'api' : '/');
+  const config = new DocumentBuilder().setTitle('SkillSwap').build();
+  const documentFactory = () => SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api/docs', app, documentFactory);
+
   app.useGlobalFilters(new AllExceptionFilter());
 
   app.useGlobalPipes(
@@ -20,9 +29,6 @@ async function bootstrap() {
       transform: true, // автоматически преобразует payload к типу DTO
     }),
   );
-
-  const configService = app.get(ConfigService);
-  const appCnfg = configService.get<ConfigType<typeof appConfig>>('app');
 
   const logger = app.get(WinstonLogger);
   logger.log(`Server started on port ${appCnfg?.port || 3000}`, 'Bootstrap');

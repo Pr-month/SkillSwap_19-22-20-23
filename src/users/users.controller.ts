@@ -10,6 +10,7 @@ import {
   HttpCode,
   HttpStatus,
   Query,
+  UseInterceptors,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -17,8 +18,13 @@ import { AccessTokenGuard } from '../auth/guards/accessToken.guard';
 import { AuthenticatedRequest } from 'src/auth/auth.types';
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import { PaginationQueryDto } from './dto/pagination-query.dto';
+import { UserPasswordFilter } from 'src/common/user-password.filter';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { Role } from 'src/common/enums/user.enums';
+import { HasRoles } from 'src/auth/decorators/roles.decorator';
 
 @Controller('users')
+@UseInterceptors(UserPasswordFilter)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
@@ -28,6 +34,7 @@ export class UsersController {
   }
 
   @Get('me')
+  @UseInterceptors(UserPasswordFilter)
   @UseGuards(AccessTokenGuard)
   getCurrentUser(@Req() req: AuthenticatedRequest) {
     return this.usersService.findById(req.user.sub);
@@ -38,9 +45,16 @@ export class UsersController {
     return this.usersService.findById(id);
   }
 
+  @Get('by-skill/:id')
+  findUsersBySkillCategory(@Param('id') id: string) {
+    return this.usersService.findUsersBySkillCategory(id);
+  }
+
+  @UseGuards(AccessTokenGuard, RolesGuard)
+  @HasRoles(Role.ADMIN)
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.usersService.remove(+id);
+    return this.usersService.remove(id);
   }
 
   @UseGuards(AccessTokenGuard) // Защищаем маршрут JWT guard'ом

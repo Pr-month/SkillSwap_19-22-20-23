@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import { Category } from './entities/category.entity';
 import { CreateCategoryDto } from './dto/create-category.dto';
 
@@ -14,19 +14,10 @@ export class CategoriesService {
   // Получить все категории (со связями)
   async findAll(): Promise<Category[]> {
     return this.categoriesRepository.find({
-      relations: ['parent', 'children', 'skills'],
+      where: { parent: IsNull() },
+      relations: ['children', 'skills'],
       order: { name: 'ASC' },
     });
-  }
-
-  // Получить категорию по id
-  async findById(id: string): Promise<Category> {
-    const category = await this.categoriesRepository.findOneOrFail({
-      where: { id },
-      relations: ['parent', 'children', 'skills'],
-    });
-
-    return category;
   }
 
   // Создать категорию
@@ -57,7 +48,10 @@ export class CategoriesService {
     name?: string,
     parentId?: string | null,
   ): Promise<Category> {
-    const category = await this.findById(id);
+    const category = await this.categoriesRepository.findOneOrFail({
+      where: { id },
+      relations: ['parent', 'children', 'skills'],
+    });
 
     if (name) {
       category.name = name;
@@ -79,7 +73,9 @@ export class CategoriesService {
 
   // Удалить категорию
   async remove(id: string): Promise<void> {
-    const category = await this.findById(id);
+    const category = await this.categoriesRepository.findOneOrFail({
+      where: { id },
+    });
     await this.categoriesRepository.remove(category);
   }
 }

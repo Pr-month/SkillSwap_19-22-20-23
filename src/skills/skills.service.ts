@@ -1,4 +1,6 @@
 import {
+  BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -131,5 +133,53 @@ export class SkillsService {
     if (result.affected === 0) {
       throw new NotFoundException(`Skill с id ${id} не найден`);
     }
+  }
+
+  async addFavoriteSkill(
+    userId: string,
+    skillId: string,
+  ): Promise<{ message: string }> {
+    const user = await this.usersRepository.findOneOrFail({
+      where: { id: userId },
+      relations: ['favoriteSkills'],
+    });
+
+    const skill = await this.skillsRepository.findOneByOrFail({ id: skillId });
+
+    // Проверяем, что навык ещё не в избранном
+    const isAlreadyFavorite = user.favoriteSkills.some(
+      (s) => s.id === skill.id,
+    );
+    if (isAlreadyFavorite) {
+      throw new ConflictException('Навык уже добавлен в избранное');
+    }
+
+    user.favoriteSkills.push(skill);
+
+    await this.usersRepository.save(user);
+
+    return { message: 'Навык успешно добавлен в избранное' };
+  }
+
+  // Удалить навык из избранного для пользователя
+  async removeFavoriteSkill(
+    userId: string,
+    skillId: string,
+  ): Promise<{ message: string }> {
+    const user = await this.usersRepository.findOneOrFail({
+      where: { id: userId },
+      relations: ['favoriteSkills'],
+    });
+
+    const index = user.favoriteSkills.findIndex((s) => s.id === skillId);
+    if (index === -1) {
+      throw new BadRequestException('Навык не найден в избранном');
+    }
+
+    user.favoriteSkills.splice(index, 1);
+
+    await this.usersRepository.save(user);
+
+    return { message: 'Навык успешно удалён из избранного' };
   }
 }

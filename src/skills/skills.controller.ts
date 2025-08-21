@@ -10,6 +10,7 @@ import {
   Query,
   UseGuards,
   Req,
+  HttpCode,
 } from '@nestjs/common';
 import { SkillsService } from './skills.service';
 import { UserPasswordFilter } from '../common/user-password.filter';
@@ -25,7 +26,7 @@ export class SkillsController {
 
   @Get()
   findAll(@Query() paginationQuery: PaginationQueryDto) {
-    return this.skillsService.findAll(paginationQuery);
+    return this.skillsService.findBySkill(paginationQuery);
   }
 
   @Get(':id')
@@ -53,5 +54,21 @@ export class SkillsController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.skillsService.remove(id);
+  }
+
+  @UseGuards(AccessTokenGuard)
+  @Post(':id/favorite')
+  @HttpCode(200)
+  addFavorite(@Param('id') skillId: string, @Req() req: AuthenticatedRequest) {
+    return this.skillsService.addFavoriteSkill(req.user.sub, skillId);
+  }
+
+  @UseGuards(AccessTokenGuard)
+  @Delete(':id/favorite')
+  removeFavorite(
+    @Param('id') skillId: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return this.skillsService.removeFavoriteSkill(req.user.sub, skillId);
   }
 }

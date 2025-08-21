@@ -12,7 +12,7 @@ import { CategoriesService } from './categories.service';
 import { Category } from './entities/category.entity';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { AccessTokenGuard } from 'src/auth/guards/accessToken.guard';
-import { RolesGuard } from 'src/auth/decorators/roles.guard';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Role } from 'src/common/enums/user.enums';
 import { HasRoles } from 'src/auth/decorators/roles.decorator';
 
@@ -23,11 +23,6 @@ export class CategoriesController {
   @Get()
   async findAll(): Promise<Category[]> {
     return this.categoriesService.findAll();
-  }
-
-  @Get(':id')
-  async findOne(@Param('id') id: string): Promise<Category> {
-    return this.categoriesService.findById(id);
   }
 
   @UseGuards(AccessTokenGuard, RolesGuard)

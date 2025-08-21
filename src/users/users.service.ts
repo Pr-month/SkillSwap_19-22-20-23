@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -11,12 +12,16 @@ import * as bcrypt from 'bcrypt';
 import { PaginationQueryDto } from './dto/pagination-query.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
+import { Skill } from '../skills/entities/skill.entity';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
+
+    @InjectRepository(Skill)
+    private readonly skillsRepository: Repository<Skill>,
   ) {}
 
   async findAll(
@@ -56,11 +61,13 @@ export class UsersService {
     });
   }
 
-  async remove(id: number): Promise<void> {
+  async remove(id: string): Promise<{ message: string }> {
     const result = await this.usersRepository.delete(id);
     if (result.affected === 0) {
       throw new NotFoundException(`Пользователь с id ${id} не найден`);
     }
+
+    return { message: `Пользователь с id ${id} успешно удалён` };
   }
 
   async create(createUserDto: CreateUserDto): Promise<User> {
@@ -77,12 +84,34 @@ export class UsersService {
     return this.usersRepository.findOneOrFail({ where: { id } });
   }
 
+  async findUsersBySkillCategory(skillId: string): Promise<User[]> {
+    const skill = await this.skillsRepository.findOneOrFail({
+      where: { id: skillId },
+      relations: ['category'],
+    });
+
+    const skillCategoryId = skill.category?.id;
+
+    if (!skillCategoryId) {
+      return [];
+    }
+
+    const users = await this.usersRepository
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.wantToLearn', 'category')
+      .where('category.id = :categoryId', { categoryId: skillCategoryId })
+      .limit(10)
+      .getMany();
+
+    return users;
+  }
+
   async updateRefreshToken(
     userId: string,
     refreshToken: string | null,
   ): Promise<void> {
     await this.usersRepository.update(userId, {
-      refreshToken: refreshToken ?? undefined,
+      refreshToken: refreshToken,
     });
   }
 
@@ -99,6 +128,10 @@ export class UsersService {
     const isMatch = await bcrypt.compare(currentPassword, user.password);
     if (!isMatch) {
       throw new UnauthorizedException('Текущий пароль неверен');
+    }
+
+    if (currentPassword === newPassword) {
+      throw new BadRequestException('Новый и текущий пароли совпадают!');
     }
 
     const hashedNewPassword = await bcrypt.hash(newPassword, 10);

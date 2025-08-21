@@ -12,6 +12,7 @@ import { UsersService } from '../users/users.service';
 import { LoginUserDto } from './dto/login-user.dto';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { JwtPayload } from './auth.types';
+import { TokensResponseDto } from './dto/tokens-response.dto';
 
 @Injectable()
 export class AuthService {
@@ -44,7 +45,7 @@ export class AuthService {
   }
 
   // метод обновления токенов
-  async refreshTokens(userPayload: JwtPayload) {
+  async refreshTokens(userPayload: JwtPayload): Promise<TokensResponseDto> {
     const user = await this.usersService.findById(userPayload.sub);
     if (!user) {
       throw new UnauthorizedException('Неверный refresh токен');
@@ -89,7 +90,7 @@ export class AuthService {
   }
 
   private async _getTokens(user: { id: string; email: string; role?: string }) {
-    const payload = { sub: user.id, email: user.email };
+    const payload = { sub: user.id, email: user.email, role: user.role };
 
     const accessToken = await this.jwtService.signAsync(payload, {
       secret: this.appConfiguration.jwt.accessTokenSecret,
