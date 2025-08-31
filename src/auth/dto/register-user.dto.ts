@@ -1,11 +1,13 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
+  IsArray,
   IsEmail,
   IsEnum,
   IsInt,
   IsOptional,
   IsString,
   IsUrl,
+  IsUUID,
   Max,
   Min,
   MinLength,
@@ -56,4 +58,9 @@ export class RegisterUserDto {
   @IsUrl()
   @IsOptional()
   avatar?: string;
+
+  @ApiPropertyOptional({ type: [String], example: ['uuid1', 'uuid2'] })
+  @IsArray()
+  @IsUUID('4', { each: true })
+  wantToLearnIds?: string[];
 }

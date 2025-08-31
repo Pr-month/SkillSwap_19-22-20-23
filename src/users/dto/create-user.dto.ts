@@ -7,6 +7,8 @@ import {
   Max,
   IsEnum,
   IsUrl,
+  IsArray,
+  IsUUID,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Role, Gender } from '../../common/enums/user.enums';
@@ -60,4 +62,9 @@ export class CreateUserDto {
   @IsOptional()
   @IsString()
   refreshToken?: string;
+
+  @ApiPropertyOptional({ type: [String], example: ['uuid1', 'uuid2'] })
+  @IsArray()
+  @IsUUID('4', { each: true })
+  wantToLearn?: string[]; // ids, которые приходят от клиента
 }

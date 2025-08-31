@@ -13,6 +13,9 @@ import { LoginUserDto } from './dto/login-user.dto';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { JwtPayload } from './auth.types';
 import { TokensResponseDto } from './dto/tokens-response.dto';
+import { Category } from 'src/categories/entities/category.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { In, Repository } from 'typeorm';
 
 @Injectable()
 export class AuthService {
@@ -21,19 +24,27 @@ export class AuthService {
     private readonly jwtService: JwtService,
     @Inject(appConfig.KEY)
     private readonly appConfiguration: IAppConfig,
+    @InjectRepository(Category)
+    private readonly categoriesRepository: Repository<Category>,
   ) {}
 
   // метод регистрации с созданием пользователя
   async register(registerDto: RegisterUserDto) {
-    const { email, password, name } = registerDto;
+    const { email, password, name, wantToLearnIds } = registerDto;
 
     const hashedPassword = await bcrypt.hash(password, 10);
+
+    const categories =
+      wantToLearnIds && wantToLearnIds.length > 0
+        ? await this.categoriesRepository.findBy({ id: In(wantToLearnIds) })
+        : [];
 
     const user = await this.usersService.create({
       ...registerDto,
       email,
       name,
       password: hashedPassword,
+      wantToLearn: categories,
     });
 
     const tokens = await this._getTokens({ id: user.id, email: user.email });
