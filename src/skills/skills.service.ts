@@ -13,6 +13,7 @@ import { CreateSkillDto } from './dto/create-skill.dto';
 import { User } from 'src/users/entities/user.entity';
 import { Category } from 'src/categories/entities/category.entity';
 import { UpdateSkillDto } from './dto/update-skill.dto';
+import { Role } from 'src/common/enums/user.enums';
 
 @Injectable()
 export class SkillsService {
@@ -128,11 +129,22 @@ export class SkillsService {
     return this.skillsRepository.save(skill);
   }
 
-  async remove(id: string): Promise<void> {
-    const result = await this.skillsRepository.delete(id);
-    if (result.affected === 0) {
+  async remove(
+    id: string,
+    currentUserId: string,
+    currentUserRole: Role,
+  ): Promise<void> {
+    const skill = await this.skillsRepository.findOne({ where: { id } });
+    if (!skill) {
       throw new NotFoundException(`Skill с id ${id} не найден`);
     }
+
+    // Проверка, что либо админ, либо владелец навыка
+    if (skill.owner.id !== currentUserId && currentUserRole !== Role.ADMIN) {
+      throw new ForbiddenException('Нет прав на удаление этого навыка');
+    }
+
+    await this.skillsRepository.delete(id);
   }
 
   async addFavoriteSkill(

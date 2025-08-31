@@ -11,6 +11,7 @@ import {
   UseGuards,
   Req,
   HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { SkillsService } from './skills.service';
 import { UserPasswordFilter } from '../common/user-password.filter';
@@ -18,6 +19,7 @@ import { PaginationQueryDto } from './dto/pagination-query.dto';
 import { AccessTokenGuard } from 'src/auth/guards/accessToken.guard';
 import { CreateSkillDto } from './dto/create-skill.dto';
 import { AuthenticatedRequest } from 'src/auth/auth.types';
+import { Role } from 'src/common/enums/user.enums';
 
 @Controller('skills')
 @UseInterceptors(UserPasswordFilter)
@@ -51,9 +53,13 @@ export class SkillsController {
   }
 
   @UseGuards(AccessTokenGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.skillsService.remove(id);
+  remove(
+    @Param('id') id: string,
+    @Req() req: AuthenticatedRequest,
+  ): Promise<void> {
+    return this.skillsService.remove(id, req.user.sub, req.user.role as Role);
   }
 
   @UseGuards(AccessTokenGuard)
